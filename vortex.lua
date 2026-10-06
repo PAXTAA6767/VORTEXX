@@ -23,26 +23,6 @@ local Settings = {
 	AimbotDistance = 100,
 	VehicleSpeedMultiplier = 1.0,
 
-	-- Auto Farm (interface/setores)
-	AutoFarm = {
-		RisingCityBank = false,
-		JewelryStore = false,
-		Museum = false,
-		PowerPlant = false,
-		CrownJewel = false,
-		Mansion = false,
-		OilRig = false,
-		Tomb = false,
-		CargoPlane = false,
-		CargoShip = false,
-		CargoTrain = false,
-		PassengerTrain = false,
-		BankTruck = false,
-		DonutShop = false,
-		GasStation = false,
-		GroceryStore = false,
-	},
-
 	-- Interface
 	ToggleKey = Enum.KeyCode.K,
 	Theme = "Dark",
@@ -64,7 +44,7 @@ local getRoleAndColor
 
 --------------------------------------------------
 -- WALK SPEED - JOGADOR
--- 0 = NORMAL | 1-100 = VELOCIDADE DEFINIDA
+-- 0 = NORMAL | 1-300 = ACRÉSCIMO SOBRE A VELOCIDADE BASE
 --------------------------------------------------
 
 local NormalWalkSpeed = 16
@@ -101,22 +81,22 @@ local function applyWalkSpeed()
 		return
 	end
 
-	if Settings.WalkSpeedBoost == 0 then
-		if humanoid.WalkSpeed ~= NormalWalkSpeed then
-			humanoid.WalkSpeed = NormalWalkSpeed
-		end
-	else
-		-- Mesmo princípio do código desofuscado:
-		-- humanoid.WalkSpeed = CONFIG.speed
-		if humanoid.WalkSpeed ~= Settings.WalkSpeedBoost then
-			humanoid.WalkSpeed = Settings.WalkSpeedBoost
-		end
+	local targetSpeed = NormalWalkSpeed
+
+	-- 0 mantém a velocidade base. Valores maiores são somados à base.
+	-- Exemplo: base 16 + valor 10 = velocidade 26.
+	if Settings.WalkSpeedBoost > 0 then
+		targetSpeed = NormalWalkSpeed + Settings.WalkSpeedBoost
+	end
+
+	if humanoid.WalkSpeed ~= targetSpeed then
+		humanoid.WalkSpeed = targetSpeed
 	end
 end
 
 local function setWalkSpeedBoost(value)
 	value = tonumber(value) or 0
-	value = math.clamp(math.floor(value + 0.5), 0, 100)
+	value = math.clamp(math.floor(value + 0.5), 0, 300)
 
 	local humanoid = captureHumanoid()
 
@@ -173,7 +153,7 @@ RunService.Heartbeat:Connect(function()
 
 	if direction.Magnitude > 0 then
 		local currentY = root.AssemblyLinearVelocity.Y
-		local horizontal = direction.Unit * Settings.WalkSpeedBoost
+		local horizontal = direction.Unit * (NormalWalkSpeed + Settings.WalkSpeedBoost)
 
 		root.AssemblyLinearVelocity = Vector3.new(
 			horizontal.X,
@@ -956,7 +936,7 @@ function ShowPlayerMenu()
 	WalkInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
 	WalkInput.BorderSizePixel = 0
 	WalkInput.Text = tostring(Settings.WalkSpeedBoost)
-	WalkInput.PlaceholderText = "0 - 100"
+	WalkInput.PlaceholderText = "0 - 300"
 	WalkInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
 	WalkInput.TextColor3 = Color3.fromRGB(220, 220, 225)
 	WalkInput.TextSize = 14
@@ -987,7 +967,7 @@ function ShowPlayerMenu()
 	Hint.Size = UDim2.new(1, -32, 0, 22)
 	Hint.Position = UDim2.new(0, 16, 0, 81)
 	Hint.BackgroundTransparency = 1
-	Hint.Text = "0 = normal  •  1-100 = velocidade do movimento"
+	Hint.Text = "0 = normal  •  1-300 = aumento sobre a velocidade base"
 	Hint.TextColor3 = Color3.fromRGB(125, 125, 132)
 	Hint.TextSize = 12
 	Hint.Font = Enum.Font.Gotham
@@ -1203,8 +1183,8 @@ function ShowPlayerMenu()
 
 		if clean ~= "" then
 			local value = tonumber(clean)
-			if value and value > 100 then
-				WalkInput.Text = "100"
+			if value and value > 300 then
+				WalkInput.Text = "300"
 			end
 		end
 	end)
@@ -1264,124 +1244,6 @@ function ShowVisualMenu()
 	BottomSpace.Position = UDim2.new(0, 0, 0, 316)
 	BottomSpace.BackgroundTransparency = 1
 	BottomSpace.Parent = VisualScroll
-end
-
-
-function ShowAutoFarmMenu()
-	ClearContent()
-	AddressText.Text = "Vortex / Auto Farm"
-	CreateBackButton(ShowMainMenu)
-	CreateMenuTitle("Auto Farm")
-
-	local Scroll = Instance.new("ScrollingFrame")
-	Scroll.Name = "AutoFarmScroll"
-	Scroll.Size = UDim2.new(1, -12, 1, -64)
-	Scroll.Position = UDim2.new(0, 6, 0, 64)
-	Scroll.BackgroundTransparency = 1
-	Scroll.BorderSizePixel = 0
-	Scroll.CanvasSize = UDim2.new(0, 0, 0, 1200)
-	Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	Scroll.ScrollBarThickness = 4
-	Scroll.ScrollBarImageColor3 = GetTheme().Accent
-	Scroll.ScrollingDirection = Enum.ScrollingDirection.Y
-	Scroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
-	Scroll.Parent = Content
-
-	local function CreateSectorTitle(parent, title, subtitle, y)
-		local Card = Instance.new("Frame")
-		Card.Size = UDim2.new(1, -32, 0, 58)
-		Card.Position = UDim2.new(0, 16, 0, y)
-		Card.BackgroundColor3 = GetTheme().Top
-		Card.BorderSizePixel = 0
-		Card.Parent = parent
-
-		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 8)
-		Corner.Parent = Card
-
-		local Title = Instance.new("TextLabel")
-		Title.Size = UDim2.new(1, -24, 0, 25)
-		Title.Position = UDim2.new(0, 12, 0, 6)
-		Title.BackgroundTransparency = 1
-		Title.Text = title
-		Title.TextColor3 = GetTheme().Accent
-		Title.TextSize = 16
-		Title.Font = Enum.Font.GothamBold
-		Title.TextXAlignment = Enum.TextXAlignment.Left
-		Title.Parent = Card
-
-		local Sub = Instance.new("TextLabel")
-		Sub.Size = UDim2.new(1, -24, 0, 20)
-		Sub.Position = UDim2.new(0, 12, 0, 32)
-		Sub.BackgroundTransparency = 1
-		Sub.Text = subtitle
-		Sub.TextColor3 = Color3.fromRGB(145, 145, 152)
-		Sub.TextSize = 11
-		Sub.Font = Enum.Font.Gotham
-		Sub.TextXAlignment = Enum.TextXAlignment.Left
-		Sub.Parent = Card
-	end
-
-	local function CreateFarmOption(parent, text, key, y)
-		CreateOption(parent, text, y, Settings.AutoFarm[key], function(value)
-			Settings.AutoFarm[key] = value
-			Status.Text = '<font color="rgb('
-				.. math.floor(GetTheme().Accent.R * 255) .. ','
-				.. math.floor(GetTheme().Accent.G * 255) .. ','
-				.. math.floor(GetTheme().Accent.B * 255)
-				.. ')">Auto Farm</font><font color="rgb(110,110,118)"> | '
-				.. text .. ': ' .. (value and "Ativado" or "Desativado")
-				.. '</font>'
-		end)
-	end
-
-	-- SETOR 1 — ASSALTOS PRINCIPAIS
-	CreateSectorTitle(
-		Scroll,
-		"Setor 01 — Assaltos Principais",
-		"Roubos fixos e grandes assaltos",
-		6
-	)
-
-	CreateFarmOption(Scroll, "Rising City Bank", "RisingCityBank", 74)
-	CreateFarmOption(Scroll, "Jewelry Store", "JewelryStore", 136)
-	CreateFarmOption(Scroll, "Museum", "Museum", 198)
-	CreateFarmOption(Scroll, "Power Plant", "PowerPlant", 260)
-	CreateFarmOption(Scroll, "Crown Jewel", "CrownJewel", 322)
-	CreateFarmOption(Scroll, "Mansion", "Mansion", 384)
-	CreateFarmOption(Scroll, "Oil Rig", "OilRig", 446)
-	CreateFarmOption(Scroll, "The Tomb", "Tomb", 508)
-
-	-- SETOR 2 — TRANSPORTES
-	CreateSectorTitle(
-		Scroll,
-		"Setor 02 — Transportes",
-		"Eventos móveis e veículos de carga",
-		572
-	)
-	CreateFarmOption(Scroll, "Cargo Plane", "CargoPlane", 640)
-	CreateFarmOption(Scroll, "Cargo Ship", "CargoShip", 702)
-	CreateFarmOption(Scroll, "Cargo Train", "CargoTrain", 764)
-	CreateFarmOption(Scroll, "Passenger Train", "PassengerTrain", 826)
-	CreateFarmOption(Scroll, "Bank Truck", "BankTruck", 888)
-
-	-- SETOR 3 — PEQUENOS ROUBOS
-	CreateSectorTitle(
-		Scroll,
-		"Setor 03 — Pequenos Roubos",
-		"Locais rápidos para completar a rota",
-		950
-	)
-
-	CreateFarmOption(Scroll, "Donut Shop", "DonutShop", 1018)
-	CreateFarmOption(Scroll, "Gas Station", "GasStation", 1080)
-	CreateFarmOption(Scroll, "Grocery Store", "GroceryStore", 1142)
-
-	local BottomSpace = Instance.new("Frame")
-	BottomSpace.Size = UDim2.new(1, 0, 0, 24)
-	BottomSpace.Position = UDim2.new(0, 0, 0, 1208)
-	BottomSpace.BackgroundTransparency = 1
-	BottomSpace.Parent = Scroll
 end
 
 function ShowConfigMenu()
@@ -1923,13 +1785,12 @@ function ShowMainMenu()
 
 	local HomeTheme = GetTheme()
 
-	local PlayerButton = CreateHomeSquareButton(-184, "rbxassetid://6034287594", "Jogador", ShowPlayerMenu, false)
-	local VisualButton = CreateHomeSquareButton(-110, "rbxassetid://6031075938", "Visual", ShowVisualMenu, false)
-	local AutoFarmButton = CreateHomeSquareButton(-36, "rbxassetid://6031075938", "Auto Farm", ShowAutoFarmMenu, false)
-	local ConfigButton = CreateHomeSquareButton(38, "rbxassetid://6031280882", "Configuração", ShowConfigMenu, false)
-	local ProfileButton = CreateHomeSquareButton(112, "", "Perfil", ShowProfileMenu, true)
+	local PlayerButton = CreateHomeSquareButton(-147, "rbxassetid://6034287594", "Jogador", ShowPlayerMenu, false)
+	local VisualButton = CreateHomeSquareButton(-73, "rbxassetid://6031075938", "Visual", ShowVisualMenu, false)
+	local ConfigButton = CreateHomeSquareButton(1, "rbxassetid://6031280882", "Configuração", ShowConfigMenu, false)
+	local ProfileButton = CreateHomeSquareButton(75, "", "Perfil", ShowProfileMenu, true)
 
-	for _, button in ipairs({PlayerButton, VisualButton, AutoFarmButton, ConfigButton, ProfileButton}) do
+	for _, button in ipairs({PlayerButton, VisualButton, ConfigButton, ProfileButton}) do
 		if button then
 			button.BackgroundColor3 = HomeTheme.Top
 
