@@ -1125,13 +1125,28 @@ function ShowOthersMenu()
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Outros")
 
+	-- Área rolável da aba Outros.
+	local OthersScroll = Instance.new("ScrollingFrame")
+	OthersScroll.Name = "OthersScroll"
+	OthersScroll.Size = UDim2.new(1, -12, 1, -64)
+	OthersScroll.Position = UDim2.new(0, 6, 0, 64)
+	OthersScroll.BackgroundTransparency = 1
+	OthersScroll.BorderSizePixel = 0
+	OthersScroll.CanvasSize = UDim2.new(0, 0, 0, 420)
+	OthersScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	OthersScroll.ScrollBarThickness = 4
+	OthersScroll.ScrollBarImageColor3 = GetTheme().Accent
+	OthersScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+	OthersScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+	OthersScroll.Parent = Content
+
 	local Card = Instance.new("Frame")
 	Card.Name = "LookPlayerCard"
 	Card.Size = UDim2.new(1, -32, 0, 76)
-	Card.Position = UDim2.new(0, 16, 0, 72)
+	Card.Position = UDim2.new(0, 16, 0, 8)
 	Card.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	Card.BorderSizePixel = 0
-	Card.Parent = Content
+	Card.Parent = OthersScroll
 
 	local CardCorner = Instance.new("UICorner")
 	CardCorner.CornerRadius = UDim.new(0, 7)
@@ -1241,6 +1256,12 @@ function ShowOthersMenu()
 		refreshPlayers()
 		PlayerList.Visible = not PlayerList.Visible
 	end)
+	local BottomSpace = Instance.new("Frame")
+	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 250)
+	BottomSpace.BackgroundTransparency = 1
+	BottomSpace.Parent = OthersScroll
+
 end
 
 function ShowConfigMenu()
