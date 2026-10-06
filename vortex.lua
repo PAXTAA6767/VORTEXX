@@ -62,8 +62,22 @@ local function setFollowTarget(targetPlayer)
 end
 
 local function stopFollowing()
+	-- Guarda a posição atual antes de desligar o acompanhamento.
+	local character = Player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+
 	FollowTarget = nil
 	Settings.FollowPlayer = false
+	FollowPauseUntil = 0
+
+	-- Cancela qualquer MoveTo antigo que ainda possa estar ativo.
+	if humanoid and root then
+		humanoid:Move(Vector3.zero, false)
+		humanoid:MoveTo(root.Position)
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+	end
 end
 
 -- Dá uma pequena janela para interações/combate sem o TP reposicionar
