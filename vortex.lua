@@ -178,6 +178,9 @@ end
 
 local function setNoClip(value)
 	Settings.NoClip = value
+
+	-- Adaptação para um único LocalScript: usa somente física permitida no cliente.
+	-- Não tenta contornar correções/validações feitas pelo servidor.
 	if not value then
 		restoreNoClipCollision()
 	end
@@ -214,8 +217,17 @@ RunService.Heartbeat:Connect(function()
 	root.AssemblyAngularVelocity = Vector3.zero
 end)
 
-Player.CharacterAdded:Connect(function()
+Player.CharacterAdded:Connect(function(character)
 	table.clear(NoClipOriginalCanCollide)
+
+	character.DescendantAdded:Connect(function(object)
+		if Settings.NoClip and object:IsA("BasePart") then
+			if NoClipOriginalCanCollide[object] == nil then
+				NoClipOriginalCanCollide[object] = object.CanCollide
+			end
+			object.CanCollide = false
+		end
+	end)
 end)
 
 --------------------------------------------------
