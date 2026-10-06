@@ -189,6 +189,7 @@ RunService.Stepped:Connect(function()
 	local character = Player.Character
 	if not character then return end
 
+	-- Remove a colisão continuamente enquanto o No Clip estiver ativo.
 	for _, object in ipairs(character:GetDescendants()) do
 		if object:IsA("BasePart") then
 			if NoClipOriginalCanCollide[object] == nil then
@@ -197,6 +198,20 @@ RunService.Stepped:Connect(function()
 			object.CanCollide = false
 		end
 	end
+end)
+
+-- Mantém a montagem física do personagem acordada durante a travessia.
+-- Isso reduz correções locais causadas pela própria física do personagem.
+RunService.Heartbeat:Connect(function()
+	if not Settings.NoClip then return end
+
+	local character = Player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not root then return end
+
+	humanoid.PlatformStand = false
+	root.AssemblyAngularVelocity = Vector3.zero
 end)
 
 Player.CharacterAdded:Connect(function()
