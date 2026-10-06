@@ -21,8 +21,6 @@ local Settings = {
 	FollowPlayer = false,
 	Aimbot = false,
 	AimbotDistance = 100,
-	GuidedAim = false,
-	GuidedAimDistance = 100,
 
 	-- Interface
 	ToggleKey = Enum.KeyCode.K,
@@ -122,7 +120,7 @@ local function stopFollowing()
 	-- Guarda a posição atual antes de desligar o acompanhamento.
 	local character = Player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local root = character and character:FindFirstChild("Head")
 
 	FollowTarget = nil
 	Settings.FollowPlayer = false
@@ -160,8 +158,8 @@ RunService.Heartbeat:Connect(function()
 	local character = Player.Character
 	local targetCharacter = target.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	local targetRoot = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
+	local root = character and character:FindFirstChild("Head")
+	local targetRoot = targetCharacter and targetCharacter:FindFirstChild("Head")
 	local targetHumanoid = targetCharacter and targetCharacter:FindFirstChildOfClass("Humanoid")
 
 	if not humanoid or not root or not targetRoot or not targetHumanoid or targetHumanoid.Health <= 0 then
@@ -731,6 +729,19 @@ end
 -- TELAS
 --------------------------------------------------
 
+-- Aimbot: ponto de mira fixo na cabeça do alvo.
+local function getAimbotHead(targetPlayer)
+	local character = targetPlayer and targetPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local head = character and character:FindFirstChild("Head")
+
+	if humanoid and humanoid.Health > 0 and head then
+		return head
+	end
+
+	return nil
+end
+
 function ShowPlayerMenu()
 	ClearContent()
 	AddressText.Text = "Vortex / Player"
@@ -907,161 +918,7 @@ function ShowPlayerMenu()
 	DistanceHint.Parent = PlayerScroll
 
 
-	-- MIRA TELEGUIDADA - opção separada do Aimbot
-	CreateOption(PlayerScroll, "Mira Teleguiada", 406, Settings.GuidedAim, function(value)
-		Settings.GuidedAim = value
-	end)
-
-	local GuidedHint = Instance.new("TextLabel")
-	GuidedHint.Size = UDim2.new(1, -32, 0, 22)
-	GuidedHint.Position = UDim2.new(0, 16, 0, 464)
-	GuidedHint.BackgroundTransparency = 1
-	GuidedHint.Text = "Trava a mira em um inimigo e acompanha seus movimentos."
-	GuidedHint.TextColor3 = Color3.fromRGB(125, 125, 132)
-	GuidedHint.TextSize = 12
-	GuidedHint.Font = Enum.Font.Gotham
-	GuidedHint.TextXAlignment = Enum.TextXAlignment.Left
-	GuidedHint.Parent = PlayerScroll
-
-	local GuidedDistanceCard = Instance.new("Frame")
-	GuidedDistanceCard.Size = UDim2.new(1, -32, 0, 58)
-	GuidedDistanceCard.Position = UDim2.new(0, 16, 0, 500)
-	GuidedDistanceCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
-	GuidedDistanceCard.BorderSizePixel = 0
-	GuidedDistanceCard.Parent = PlayerScroll
-
-	local GuidedDistanceCorner = Instance.new("UICorner")
-	GuidedDistanceCorner.CornerRadius = UDim.new(0, 8)
-	GuidedDistanceCorner.Parent = GuidedDistanceCard
-
-	local GuidedDistanceLabel = Instance.new("TextLabel")
-	GuidedDistanceLabel.Size = UDim2.new(1, -230, 1, 0)
-	GuidedDistanceLabel.Position = UDim2.new(0, 16, 0, 0)
-	GuidedDistanceLabel.BackgroundTransparency = 1
-	GuidedDistanceLabel.Text = "Distância Mira Teleguiada"
-	GuidedDistanceLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
-	GuidedDistanceLabel.TextSize = 17
-	GuidedDistanceLabel.Font = Enum.Font.Gotham
-	GuidedDistanceLabel.TextXAlignment = Enum.TextXAlignment.Left
-	GuidedDistanceLabel.Parent = GuidedDistanceCard
-
-	local GuidedDistanceInput = Instance.new("TextBox")
-	GuidedDistanceInput.Size = UDim2.new(0, 142, 0, 34)
-	GuidedDistanceInput.Position = UDim2.new(1, -158, 0.5, -17)
-	GuidedDistanceInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
-	GuidedDistanceInput.BorderSizePixel = 0
-	GuidedDistanceInput.Text = tostring(Settings.GuidedAimDistance)
-	GuidedDistanceInput.PlaceholderText = "1 - 500 m"
-	GuidedDistanceInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
-	GuidedDistanceInput.TextColor3 = Color3.fromRGB(220, 220, 225)
-	GuidedDistanceInput.TextSize = 14
-	GuidedDistanceInput.Font = Enum.Font.Gotham
-	GuidedDistanceInput.ClearTextOnFocus = false
-	GuidedDistanceInput.Parent = GuidedDistanceCard
-
-	local GuidedDistanceStroke = Instance.new("UIStroke")
-	GuidedDistanceStroke.Thickness = 1.5
-	GuidedDistanceStroke.Color = GetTheme().Accent
-	GuidedDistanceStroke.Parent = GuidedDistanceInput
-
-	local GuidedDistanceInputCorner = Instance.new("UICorner")
-	GuidedDistanceInputCorner.CornerRadius = UDim.new(0, 8)
-	GuidedDistanceInputCorner.Parent = GuidedDistanceInput
-
-	local GuidedDistanceHint = Instance.new("TextLabel")
-	GuidedDistanceHint.Size = UDim2.new(1, -32, 0, 22)
-	GuidedDistanceHint.Position = UDim2.new(0, 16, 0, 563)
-	GuidedDistanceHint.BackgroundTransparency = 1
-	GuidedDistanceHint.Text = "Alcance independente: escolha de 1 a 500 metros."
-	GuidedDistanceHint.TextColor3 = Color3.fromRGB(125, 125, 132)
-	GuidedDistanceHint.TextSize = 12
-	GuidedDistanceHint.Font = Enum.Font.Gotham
-	GuidedDistanceHint.TextXAlignment = Enum.TextXAlignment.Left
-	GuidedDistanceHint.Parent = PlayerScroll
-
-	local function applyGuidedAimDistance()
-		local raw = GuidedDistanceInput.Text:gsub("[^%d]", "")
-		local value = tonumber(raw) or Settings.GuidedAimDistance
-		value = math.clamp(math.floor(value + 0.5), 1, 500)
-		Settings.GuidedAimDistance = value
-		GuidedDistanceInput.Text = tostring(value)
-	end
-
-	GuidedDistanceInput.FocusLost:Connect(applyGuidedAimDistance)
-
-	GuidedDistanceInput:GetPropertyChangedSignal("Text"):Connect(function()
-		local clean = GuidedDistanceInput.Text:gsub("[^%d]", "")
-		if clean ~= GuidedDistanceInput.Text then
-			GuidedDistanceInput.Text = clean
-			return
-		end
-
-		if clean ~= "" then
-			local value = tonumber(clean)
-			if value and value > 500 then
-				GuidedDistanceInput.Text = "500"
-			end
-		end
-	end)
-
-	local BottomSpace = Instance.new("Frame")
-	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
-	BottomSpace.Position = UDim2.new(0, 0, 0, 600)
-	BottomSpace.BackgroundTransparency = 1
-	BottomSpace.Parent = PlayerScroll
-
-	local function applyAimbotDistance()
-		local raw = DistanceInput.Text:gsub("[^%d]", "")
-		local value = tonumber(raw) or Settings.AimbotDistance
-		value = math.clamp(math.floor(value + 0.5), 1, 200)
-		Settings.AimbotDistance = value
-		DistanceInput.Text = tostring(value)
-	end
-
-	DistanceInput.FocusLost:Connect(applyAimbotDistance)
-
-	DistanceInput:GetPropertyChangedSignal("Text"):Connect(function()
-		local clean = DistanceInput.Text:gsub("[^%d]", "")
-		if clean ~= DistanceInput.Text then
-			DistanceInput.Text = clean
-			return
-		end
-
-		if clean ~= "" then
-			local value = tonumber(clean)
-			if value and value > 200 then
-				DistanceInput.Text = "200"
-			end
-		end
-	end)
-
-	local function applyInput()
-		local raw = WalkInput.Text:gsub("[^%d]", "")
-		local value = tonumber(raw) or 0
-		value = setWalkSpeedBoost(value)
-		WalkInput.Text = tostring(value)
-	end
-
-	WalkInput.FocusLost:Connect(function()
-		applyInput()
-	end)
-
-	WalkInput:GetPropertyChangedSignal("Text"):Connect(function()
-		local clean = WalkInput.Text:gsub("[^%d]", "")
-
-		if clean ~= WalkInput.Text then
-			WalkInput.Text = clean
-			return
-		end
-
-		if clean ~= "" then
-			local value = tonumber(clean)
-			if value and value > 200 then
-				WalkInput.Text = "200"
-			end
-		end
-	end)
-end
+	
 
 function ShowVisualMenu()
 	ClearContent()
@@ -1142,7 +999,7 @@ function ShowOthersMenu()
 
 	local Card = Instance.new("Frame")
 	Card.Name = "LookPlayerCard"
-	Card.Size = UDim2.new(1, -32, 0, 76)
+	Card.Size = UDim2.new(1, -32, 0, 48)
 	Card.Position = UDim2.new(0, 16, 0, 8)
 	Card.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	Card.BorderSizePixel = 0
@@ -1153,15 +1010,28 @@ function ShowOthersMenu()
 	CardCorner.Parent = Card
 
 	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(0, 170, 1, 0)
+	Label.Size = UDim2.new(0, 210, 1, 0)
 	Label.Position = UDim2.new(0, 16, 0, 0)
 	Label.BackgroundTransparency = 1
-	Label.Text = "Olhar Player"
+	Label.Text = "Olhar Jogador"
 	Label.TextColor3 = Color3.fromRGB(220, 220, 225)
 	Label.TextSize = 17
 	Label.Font = Enum.Font.Gotham
 	Label.TextXAlignment = Enum.TextXAlignment.Left
 	Label.Parent = Card
+
+	local Description = Instance.new("TextLabel")
+	Description.Size = UDim2.new(1, -32, 0, 24)
+	Description.Position = UDim2.new(0, 16, 0, 58)
+	Description.BackgroundTransparency = 1
+	Description.Text = "Selecione um jogador do servidor para acompanhar de perto."
+	Description.TextColor3 = Color3.fromRGB(130, 130, 140)
+	Description.TextSize = 10
+	Description.Font = Enum.Font.Gotham
+	Description.TextWrapped = false
+	Description.TextXAlignment = Enum.TextXAlignment.Left
+	Description.TextYAlignment = Enum.TextYAlignment.Center
+	Description.Parent = OthersScroll
 
 	local PlayerSelect = Instance.new("TextButton")
 	PlayerSelect.Size = UDim2.new(0, 260, 0, 36)
@@ -1881,7 +1751,7 @@ local function destroyESP(plr)
 end
 
 local function getRoot(character)
-	return character and character:FindFirstChild("HumanoidRootPart")
+	return character and character:FindFirstChild("Head")
 end
 
 local function darkTeamColor(color)
@@ -2084,368 +1954,6 @@ local function getClosestAimbotTarget()
 end
 
 
---------------------------------------------------
--- MIRA TELEGUIDADA - LOCK-ON INDEPENDENTE
---------------------------------------------------
-
-local GuidedAimTarget = nil
-
-local function isValidGuidedTarget(targetPlayer)
-	if not targetPlayer or targetPlayer == Player then
-		return false
-	end
-
-	local localCharacter = Player.Character
-	local localRoot = getRoot(localCharacter)
-	local character = targetPlayer.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local head = character and character:FindFirstChild("Head")
-	local root = getRoot(character)
-
-	if not localRoot or not humanoid or humanoid.Health <= 0 or not head or not root then
-		return false
-	end
-
-	local localRole = getRoleAndColor(Player)
-	local targetRole = getRoleAndColor(targetPlayer)
-	if not isAimbotEnemy(localRole, targetRole) then
-		return false
-	end
-
-	local maxDistance = Settings.GuidedAimDistance * 3.57
-	if (root.Position - localRoot.Position).Magnitude > maxDistance then
-		return false
-	end
-
-	-- A Mira Teleguiada só mantém/trava o alvo se houver visão direta.
-	-- Se uma parede ou outro objeto estiver na frente, o lock é perdido.
-	local camera = workspace.CurrentCamera
-	if not camera then
-		return false
-	end
-
-	local rayParams = RaycastParams.new()
-	rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	rayParams.FilterDescendantsInstances = {Player.Character}
-	rayParams.IgnoreWater = true
-
-	local origin = camera.CFrame.Position
-	local direction = head.Position - origin
-	local result = workspace:Raycast(origin, direction, rayParams)
-
-	return result ~= nil
-		and result.Instance ~= nil
-		and result.Instance:IsDescendantOf(character)
-end
-
-local function getClosestGuidedTarget()
-	local localRoot = getRoot(Player.Character)
-	if not localRoot then return nil end
-
-	local bestPlayer = nil
-	local bestDistance = math.huge
-	local maxDistance = Settings.GuidedAimDistance * 3.57
-
-	for _, targetPlayer in ipairs(Players:GetPlayers()) do
-		if isValidGuidedTarget(targetPlayer) then
-			local root = getRoot(targetPlayer.Character)
-			local distance = (root.Position - localRoot.Position).Magnitude
-			if distance <= maxDistance and distance < bestDistance then
-				bestDistance = distance
-				bestPlayer = targetPlayer
-			end
-		end
-	end
-
-	return bestPlayer
-end
-
-RunService:BindToRenderStep("VortexGuidedAim", Enum.RenderPriority.Camera.Value + 1, function()
-	if not Settings.GuidedAim then
-		GuidedAimTarget = nil
-		return
-	end
-
-	-- Mantém o mesmo jogador enquanto ele continuar válido:
-	-- a mira fica realmente "grudada" nele em vez de trocar a cada frame.
-	if not isValidGuidedTarget(GuidedAimTarget) then
-		GuidedAimTarget = getClosestGuidedTarget()
-	end
-
-	if not GuidedAimTarget then
-		return
-	end
-
-	local character = GuidedAimTarget.Character
-	local head = character and character:FindFirstChild("Head")
-	local camera = workspace.CurrentCamera
-
-	if camera and head then
-		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, head.Position)
-	end
-end)
-
-RunService.RenderStepped:Connect(function()
-	if not Settings.Aimbot then
-		return
-	end
-
-	local camera = workspace.CurrentCamera
-	if not camera then
-		return
-	end
-
-	local targetHead = getClosestAimbotTarget()
-	if not targetHead then
-		return
-	end
-
-	camera.CFrame = CFrame.lookAt(camera.CFrame.Position, targetHead.Position)
-end)
-
-local function updateESP(plr)
-	local existingData = ESP[plr]
-	if existingData and not Settings.EnableNames and not Settings.EnableDistance then
-		if existingData.Billboard then
-			existingData.Billboard:Destroy()
-			existingData.Billboard = nil
-			existingData.Label = nil
-		end
-	end
-
-	if plr == Player then
-		destroyESP(plr)
-		return
-	end
-
-	if not Settings.EnableESP then
-		destroyESP(plr)
-		return
-	end
-
-	local character = plr.Character
-	local root = getRoot(character)
-
-	if not character or not root then
-		destroyESP(plr)
-		return
-	end
-
-	local role, teamColor = getRoleAndColor(plr)
-
-	-- Só exibe jogadores identificados como Polícia, Ladrão ou Prisioneiro.
-	if not role or not teamColor then
-		destroyESP(plr)
-		return
-	end
-
-	local data = ESP[plr]
-
-	if not data or data.Character ~= character then
-		destroyESP(plr)
-		data = {Character = character}
-		ESP[plr] = data
-
-		-- Oculta o nome padrão do Roblox para que Enable Names controle
-		-- sozinho se o nome aparece ou não.
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			data.Humanoid = humanoid
-			data.OriginalDisplayDistanceType = humanoid.DisplayDistanceType
-			humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-		end
-	end
-
-	if data.Humanoid then
-		data.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-	end
-
-	-- Caixa/contorno
-	if Settings.EnableBoxes then
-		if not data.Highlight then
-			local highlight = Instance.new("Highlight")
-			highlight.Name = "VortexESP"
-			highlight.Adornee = character
-			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-			highlight.FillTransparency = 0.82
-			highlight.OutlineTransparency = 0
-			local teamColor = getTeamColor(plr)
-			highlight.FillColor = teamColor
-			highlight.OutlineColor = teamColor:Lerp(Color3.new(1, 1, 1), 0.35)
-			highlight.Parent = character
-			data.Highlight = highlight
-		end
-	elseif data.Highlight then
-		data.Highlight:Destroy()
-		data.Highlight = nil
-	end
-
-	-- Cor da equipe sempre atualizada.
-	role, teamColor = getRoleAndColor(plr)
-
-	if data.Highlight then
-		data.Highlight.FillColor = teamColor
-		data.Highlight.OutlineColor = teamColor:Lerp(Color3.new(1, 1, 1), 0.35)
-	end
-
-	-- Nome e distância
-	if Settings.EnableNames or Settings.EnableDistance then
-		if not data.Billboard then
-			local billboard = Instance.new("BillboardGui")
-			billboard.Name = "VortexInfo"
-			billboard.Adornee = root
-			billboard.Size = UDim2.fromOffset(220, 40)
-			billboard.StudsOffset = Vector3.new(0, 3.7, 0)
-			billboard.AlwaysOnTop = true
-			billboard.Parent = root
-			data.Billboard = billboard
-
-			local label = Instance.new("TextLabel")
-			label.Size = UDim2.fromScale(1, 1)
-			label.BackgroundTransparency = 1
-			label.TextColor3 = getTeamColor(plr)
-			label.TextStrokeTransparency = 0
-			label.TextSize = 12
-			label.Font = Enum.Font.GothamBold
-			label.Parent = billboard
-			data.Label = label
-		end
-
-		local parts = {}
-
-		if Settings.EnableNames then
-			table.insert(parts, plr.Name)
-		end
-
-		if Settings.EnableDistance then
-			local localCharacter = Player.Character
-			local localRoot = getRoot(localCharacter)
-			if localRoot then
-				local distance = (localRoot.Position - root.Position).Magnitude
-				table.insert(parts, string.format("[%dm]", math.floor(distance + 0.5)))
-			end
-		end
-
-		data.Label.Text = table.concat(parts, " ")
-		data.Label.TextColor3 = teamColor
-	elseif data.Billboard then
-		data.Billboard:Destroy()
-		data.Billboard = nil
-		data.Label = nil
-	end
-
-	-- Tracer: mesma cor da equipe, porém mais escura e sem emissão.
-	local tracerColor = darkTeamColor(teamColor)
-
-	if Settings.EnableTracers then
-		local localRoot = getRoot(Player.Character)
-
-		-- Se o jogador local morreu/respawnou, o Beam antigo fica preso no root antigo.
-		-- Nesse caso, removemos e recriamos automaticamente.
-		if data.Tracer and (
-			not data.Tracer.Parent
-				or not data.Tracer.Attachment0
-				or data.Tracer.Attachment0.Parent ~= localRoot
-				or not data.Tracer.Attachment1
-				or data.Tracer.Attachment1.Parent ~= root
-			) then
-			destroyTracer(data)
-		end
-
-		if localRoot then
-			local fromAttachment = localRoot:FindFirstChild("VortexTracerOrigin")
-
-			if not fromAttachment then
-				fromAttachment = Instance.new("Attachment")
-				fromAttachment.Name = "VortexTracerOrigin"
-				fromAttachment.Parent = localRoot
-			end
-
-			if not data.Tracer then
-				local attachment = Instance.new("Attachment")
-				attachment.Name = "VortexTracerAttachment"
-				attachment.Parent = root
-
-				local beam = Instance.new("Beam")
-				beam.Name = "VortexTracer"
-				beam.Attachment0 = fromAttachment
-				beam.Attachment1 = attachment
-				beam.FaceCamera = true
-				beam.Width0 = 0.085
-				beam.Width1 = 0.085
-				beam.Color = ColorSequence.new(tracerColor)
-				beam.Transparency = NumberSequence.new(0)
-				beam.LightEmission = 0
-				beam.LightInfluence = 1
-				beam.Parent = localRoot
-
-				data.Tracer = beam
-				data.TracerAttachment = attachment
-			else
-				data.Tracer.Color = ColorSequence.new(tracerColor)
-				data.Tracer.Transparency = NumberSequence.new(0)
-				data.Tracer.LightEmission = 0
-				data.Tracer.LightInfluence = 1
-			end
-		else
-			destroyTracer(data)
-		end
-	else
-		destroyTracer(data)
-	end
-end
-
-refreshAllESP = function()
-	for _, plr in ipairs(Players:GetPlayers()) do
-		updateESP(plr)
-	end
-end
-
-Players.PlayerAdded:Connect(function(plr)
-	plr.CharacterAdded:Connect(function(character)
-		character:WaitForChild("HumanoidRootPart", 5)
-		task.wait(0.15)
-		destroyESP(plr)
-		updateESP(plr)
-	end)
-end)
-
-Players.PlayerRemoving:Connect(function(plr)
-	destroyESP(plr)
-end)
-
-for _, plr in ipairs(Players:GetPlayers()) do
-	if plr ~= Player then
-		plr.CharacterAdded:Connect(function(character)
-			character:WaitForChild("HumanoidRootPart", 5)
-			task.wait(0.15)
-			destroyESP(plr)
-			updateESP(plr)
-		end)
-	end
-end
-
--- Quando o jogador local respawna, recria as linhas usando o novo personagem.
-Player.CharacterAdded:Connect(function(character)
-	character:WaitForChild("HumanoidRootPart", 5)
-	task.wait(0.2)
-
-	for _, plr in ipairs(Players:GetPlayers()) do
-		destroyTracer(ESP[plr])
-	end
-
-	removeLocalTracerOrigin()
-	refreshAllESP()
-end)
-
--- Reaplica configurações do ESP, cores de equipe, distância e novos personagens.
-task.spawn(function()
-	while task.wait(0.25) do
-		refreshAllESP()
-	end
-end)
-
-refreshAllESP()
 
 --------------------------------------------------
 -- ARRASTAR PAINEL
