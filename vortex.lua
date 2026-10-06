@@ -29,8 +29,59 @@ local refreshAllESP
 -- WALK SPEED - JOGADOR
 --------------------------------------------------
 
+local RunService = game:GetService("RunService")
+
 local DefaultWalkSpeed = 16
-local CurrentHumanoid
+local CurrentHumanoid = nil
+local WalkSpeedConnection = nil
+
+local function getHumanoid()
+	local character = Player.Character
+	if not character then
+		return nil
+	end
+
+	return character:FindFirstChildOfClass("Humanoid")
+end
+
+local function getTargetWalkSpeed()
+	-- 0 = velocidade normal.
+	if Settings.WalkSpeedBoost <= 0 then
+		return DefaultWalkSpeed
+	end
+
+	-- O valor digitado representa a velocidade final.
+	-- Ex.: 50 = WalkSpeed 50.
+	return Settings.WalkSpeedBoost
+end
+
+local function applyWalkSpeed()
+	local humanoid = getHumanoid()
+
+	if not humanoid then
+		return
+	end
+
+	CurrentHumanoid = humanoid
+	local target = getTargetWalkSpeed()
+
+	if humanoid.WalkSpeed ~= target then
+		humanoid.WalkSpeed = target
+	end
+end
+
+local function startWalkSpeedUpdater()
+	if WalkSpeedConnection then
+		WalkSpeedConnection:Disconnect()
+		WalkSpeedConnection = nil
+	end
+
+	WalkSpeedConnection = RunService.Heartbeat:Connect(function()
+		if Settings.WalkSpeedBoost > 0 then
+			applyWalkSpeed()
+		end
+	end)
+end
 
 local function captureHumanoid(character)
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -39,29 +90,28 @@ local function captureHumanoid(character)
 	end
 
 	CurrentHumanoid = humanoid
-	DefaultWalkSpeed = humanoid.WalkSpeed
 
-	-- 0 = velocidade normal
+	-- Guarda a velocidade normal do personagem atual.
 	if Settings.WalkSpeedBoost <= 0 then
-		humanoid.WalkSpeed = DefaultWalkSpeed
-	else
-		humanoid.WalkSpeed = DefaultWalkSpeed + Settings.WalkSpeedBoost
+		DefaultWalkSpeed = humanoid.WalkSpeed
 	end
+
+	applyWalkSpeed()
 end
 
 local function setWalkSpeedBoost(value)
 	value = tonumber(value) or 0
 	value = math.clamp(math.floor(value + 0.5), 0, 100)
+
 	Settings.WalkSpeedBoost = value
 
-	local character = Player.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local humanoid = getHumanoid()
 
 	if humanoid then
-		if Settings.WalkSpeedBoost == 0 then
+		if value == 0 then
 			humanoid.WalkSpeed = DefaultWalkSpeed
 		else
-			humanoid.WalkSpeed = DefaultWalkSpeed + Settings.WalkSpeedBoost
+			humanoid.WalkSpeed = value
 		end
 	end
 
@@ -74,11 +124,20 @@ end
 
 Player.CharacterAdded:Connect(function(character)
 	local humanoid = character:WaitForChild("Humanoid", 5)
+
 	if humanoid then
 		task.wait(0.1)
+
+		-- Novo personagem: captura a velocidade padrão dele.
+		if Settings.WalkSpeedBoost <= 0 then
+			DefaultWalkSpeed = humanoid.WalkSpeed
+		end
+
 		captureHumanoid(character)
 	end
 end)
+
+startWalkSpeedUpdater()
 
 --------------------------------------------------
 -- GUI
@@ -469,7 +528,7 @@ function ShowPlayerMenu()
 	Hint.Size = UDim2.new(1, -32, 0, 22)
 	Hint.Position = UDim2.new(0, 16, 0, 145)
 	Hint.BackgroundTransparency = 1
-	Hint.Text = "0 = velocidade normal  •  1-100 = aumento de velocidade"
+	Hint.Text = "0 = velocidade normal  •  1-100 = velocidade desejada"
 	Hint.TextColor3 = Color3.fromRGB(125, 125, 132)
 	Hint.TextSize = 12
 	Hint.Font = Enum.Font.Gotham
