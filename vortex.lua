@@ -1,407 +1,454 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "Vortex"
-gui.ResetOnSpawn = false
-gui.Parent = playerGui
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 --------------------------------------------------
--- BOTÃO
+-- CONFIGURAÇÕES
 --------------------------------------------------
 
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 180, 0, 55)
-button.Position = UDim2.new(0, 20, 0, 100)
-button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-button.TextColor3 = Color3.new(1, 1, 1)
-button.Text = "ABRIR VORTEX"
-button.TextSize = 18
-button.Font = Enum.Font.GothamBold
-button.Parent = gui
+local ESP = true
+local PLAYERS = true
+local BOXES = true
+local NAMES = true
+local DISTANCE = true
+local TRACERS = false
 
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 8)
-buttonCorner.Parent = button
+local ESPData = {}
+
+--------------------------------------------------
+-- GUI
+--------------------------------------------------
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "VitexxTestPanel"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
 
 --------------------------------------------------
 -- PAINEL
 --------------------------------------------------
 
-local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 400, 0, 280)
-panel.Position = UDim2.new(0.5, -200, 0.5, -140)
-panel.BackgroundColor3 = Color3.fromRGB(25, 25, 27)
-panel.Visible = false
-panel.Parent = gui
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 760, 0, 500)
+Main.Position = UDim2.new(0.5, -380, 0.5, -250)
+Main.BackgroundColor3 = Color3.fromRGB(35, 35, 39)
+Main.BorderSizePixel = 0
+Main.Visible = false
+Main.Parent = ScreenGui
 
-local panelCorner = Instance.new("UICorner")
-panelCorner.CornerRadius = UDim.new(0, 8)
-panelCorner.Parent = panel
-
---------------------------------------------------
--- TÍTULO
---------------------------------------------------
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -60, 0, 50)
-title.Position = UDim2.new(0, 15, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "◐  Vortex"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextSize = 18
-title.Font = Enum.Font.GothamBold
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = panel
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = Main
 
 --------------------------------------------------
--- FECHAR
+-- BARRA SUPERIOR
 --------------------------------------------------
 
-local close = Instance.new("TextButton")
-close.Size = UDim2.new(0, 45, 0, 45)
-close.Position = UDim2.new(1, -50, 0, 2)
-close.BackgroundTransparency = 1
-close.Text = "×"
-close.TextColor3 = Color3.fromRGB(180, 180, 180)
-close.TextSize = 25
-close.Parent = panel
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 45)
+TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = Main
 
---------------------------------------------------
--- SIDEBAR
---------------------------------------------------
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 10)
+TopCorner.Parent = TopBar
 
-local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.new(0, 100, 1, -50)
-sidebar.Position = UDim2.new(0, 0, 0, 50)
-sidebar.BackgroundColor3 = Color3.fromRGB(21, 22, 24)
-sidebar.BorderSizePixel = 0
-sidebar.Parent = panel
-
---------------------------------------------------
--- BOTÕES DA SIDEBAR
---------------------------------------------------
-
-local function sidebarButton(text, y)
-
-	local b = Instance.new("TextButton")
-
-	b.Size = UDim2.new(0, 88, 0, 38)
-	b.Position = UDim2.new(0, 6, 0, y)
-
-	b.BackgroundColor3 = Color3.fromRGB(38, 39, 42)
-	b.TextColor3 = Color3.fromRGB(145, 145, 150)
-
-	b.Text = text
-	b.TextSize = 11
-	b.Font = Enum.Font.Gotham
-
-	b.Parent = sidebar
-
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, 5)
-	c.Parent = b
-
-	b.MouseButton1Click:Connect(function()
-		print("ABA:", text)
-	end)
-end
-
-sidebarButton("⌂  Home", 10)
-sidebarButton("◉  Visual", 54)
-sidebarButton("♙  Player", 98)
-sidebarButton("⚙  Misc", 142)
-
---------------------------------------------------
--- ABRIR
---------------------------------------------------
-
-button.MouseButton1Click:Connect(function()
-
-	button.Visible = false
-	panel.Visible = true
-
-end)
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Position = UDim2.new(0, 18, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "☾  Chaos"
+Title.TextColor3 = Color3.fromRGB(225, 225, 225)
+Title.TextSize = 15
+Title.Font = Enum.Font.Gotham
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
 
 --------------------------------------------------
 -- FECHAR
 --------------------------------------------------
 
-close.MouseButton1Click:Connect(function()
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.new(0, 40, 0, 40)
+Close.Position = UDim2.new(1, -48, 0, 2)
+Close.BackgroundTransparency = 1
+Close.Text = "×"
+Close.TextColor3 = Color3.fromRGB(220, 220, 220)
+Close.TextSize = 25
+Close.Font = Enum.Font.Gotham
+Close.Parent = TopBar
 
-	panel.Visible = false
-	button.Visible = true
-
+Close.MouseButton1Click:Connect(function()
+	Main.Visible = false
 end)
 
 --------------------------------------------------
--- VORTEX VISUALS
--- COMPLEMENTO - NÃO ALTERA A BASE
+-- ABA
 --------------------------------------------------
 
-local visualWindow = Instance.new("Frame")
+local Tab = Instance.new("Frame")
+Tab.Size = UDim2.new(0, 155, 0, 35)
+Tab.Position = UDim2.new(0, 165, 0, 5)
+Tab.BackgroundColor3 = Color3.fromRGB(48, 48, 53)
+Tab.BorderSizePixel = 0
+Tab.Parent = TopBar
 
-visualWindow.Name = "VisualWindow"
-visualWindow.Size = UDim2.new(0, 520, 0, 400)
-visualWindow.Position = UDim2.new(0.5, -260, 0.5, -200)
+local TabCorner = Instance.new("UICorner")
+TabCorner.CornerRadius = UDim.new(0, 7)
+TabCorner.Parent = Tab
 
-visualWindow.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
-visualWindow.Visible = false
-visualWindow.Parent = gui
-
-local windowCorner = Instance.new("UICorner")
-windowCorner.CornerRadius = UDim.new(0, 10)
-windowCorner.Parent = visualWindow
-
---------------------------------------------------
--- TOPO
---------------------------------------------------
-
-local header = Instance.new("Frame")
-
-header.Size = UDim2.new(1, 0, 0, 50)
-header.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
-header.BorderSizePixel = 0
-header.Parent = visualWindow
-
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 10)
-headerCorner.Parent = header
-
-local headerTitle = Instance.new("TextLabel")
-
-headerTitle.Size = UDim2.new(1, -60, 1, 0)
-headerTitle.Position = UDim2.new(0, 18, 0, 0)
-
-headerTitle.BackgroundTransparency = 1
-headerTitle.Text = "◉  Visuals"
-headerTitle.TextColor3 = Color3.fromRGB(235, 235, 235)
-
-headerTitle.TextSize = 17
-headerTitle.Font = Enum.Font.GothamBold
-headerTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-headerTitle.Parent = header
+local TabText = Instance.new("TextLabel")
+TabText.Size = UDim2.new(1, -35, 1, 0)
+TabText.Position = UDim2.new(0, 10, 0, 0)
+TabText.BackgroundTransparency = 1
+TabText.Text = "👁  Visuals"
+TabText.TextColor3 = Color3.fromRGB(220, 220, 220)
+TabText.TextSize = 14
+TabText.Font = Enum.Font.Gotham
+TabText.TextXAlignment = Enum.TextXAlignment.Left
+TabText.Parent = Tab
 
 --------------------------------------------------
--- FECHAR JANELA
+-- ENDEREÇO
 --------------------------------------------------
 
-local visualClose = Instance.new("TextButton")
+local Address = Instance.new("TextLabel")
+Address.Size = UDim2.new(1, -30, 0, 34)
+Address.Position = UDim2.new(0, 15, 0, 55)
+Address.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+Address.BorderSizePixel = 0
+Address.Text = "  🔍   Test Environment / Visuals"
+Address.TextColor3 = Color3.fromRGB(145, 145, 150)
+Address.TextSize = 14
+Address.Font = Enum.Font.Gotham
+Address.TextXAlignment = Enum.TextXAlignment.Left
+Address.Parent = Main
 
-visualClose.Size = UDim2.new(0, 42, 0, 42)
-visualClose.Position = UDim2.new(1, -46, 0, 4)
-
-visualClose.BackgroundTransparency = 1
-visualClose.Text = "×"
-
-visualClose.TextColor3 = Color3.fromRGB(200, 200, 200)
-visualClose.TextSize = 25
-visualClose.Font = Enum.Font.Gotham
-
-visualClose.Parent = header
-
---------------------------------------------------
--- CONTEÚDO
---------------------------------------------------
-
-local content = Instance.new("Frame")
-
-content.Size = UDim2.new(1, -30, 1, -70)
-content.Position = UDim2.new(0, 15, 0, 60)
-
-content.BackgroundTransparency = 1
-content.Parent = visualWindow
+local AddressCorner = Instance.new("UICorner")
+AddressCorner.CornerRadius = UDim.new(0, 7)
+AddressCorner.Parent = Address
 
 --------------------------------------------------
--- TÍTULO
+-- ÁREA DAS OPÇÕES
 --------------------------------------------------
 
-local info = Instance.new("TextLabel")
+local Options = Instance.new("Frame")
+Options.Size = UDim2.new(1, -30, 0, 350)
+Options.Position = UDim2.new(0, 15, 0, 100)
+Options.BackgroundColor3 = Color3.fromRGB(39, 39, 44)
+Options.BorderSizePixel = 0
+Options.Parent = Main
 
-info.Size = UDim2.new(1, 0, 0, 35)
-
-info.BackgroundTransparency = 1
-info.Text = "Visual Settings"
-
-info.TextColor3 = Color3.fromRGB(210, 210, 215)
-info.TextSize = 16
-info.Font = Enum.Font.GothamBold
-
-info.TextXAlignment = Enum.TextXAlignment.Left
-info.Parent = content
+local OptionsCorner = Instance.new("UICorner")
+OptionsCorner.CornerRadius = UDim.new(0, 10)
+OptionsCorner.Parent = Options
 
 --------------------------------------------------
--- CRIAR OPÇÃO
+-- TOGGLE
 --------------------------------------------------
 
-local function createOption(nome, posY)
+local function CreateOption(text, y, default, callback)
 
-	local option = Instance.new("TextButton")
+	local Button = Instance.new("TextButton")
+	Button.Size = UDim2.new(1, -30, 0, 55)
+	Button.Position = UDim2.new(0, 15, 0, y)
+	Button.BackgroundColor3 = Color3.fromRGB(48, 48, 53)
+	Button.BorderSizePixel = 0
+	Button.Text = ""
+	Button.AutoButtonColor = false
+	Button.Parent = Options
 
-	option.Size = UDim2.new(1, 0, 0, 50)
-	option.Position = UDim2.new(0, 0, 0, posY)
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 8)
+	Corner.Parent = Button
 
-	option.BackgroundColor3 = Color3.fromRGB(43, 43, 48)
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(1, -75, 1, 0)
+	Label.Position = UDim2.new(0, 15, 0, 0)
+	Label.BackgroundTransparency = 1
+	Label.Text = text
+	Label.TextColor3 = Color3.fromRGB(225, 225, 225)
+	Label.TextSize = 19
+	Label.Font = Enum.Font.Gotham
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = Button
 
-	option.Text = ""
-	option.AutoButtonColor = false
+	local Check = Instance.new("Frame")
+	Check.Size = UDim2.new(0, 24, 0, 24)
+	Check.Position = UDim2.new(1, -45, 0.5, -12)
+	Check.BackgroundColor3 = Color3.fromRGB(42, 42, 46)
+	Check.BorderSizePixel = 2
+	Check.BorderColor3 = Color3.fromRGB(135, 135, 140)
+	Check.Parent = Button
 
-	option.Parent = content
+	local CheckCorner = Instance.new("UICorner")
+	CheckCorner.CornerRadius = UDim.new(0, 3)
+	CheckCorner.Parent = Check
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 7)
-	corner.Parent = option
+	local Mark = Instance.new("TextLabel")
+	Mark.Size = UDim2.fromScale(1, 1)
+	Mark.BackgroundTransparency = 1
+	Mark.Text = "✓"
+	Mark.TextColor3 = Color3.new(1, 1, 1)
+	Mark.TextSize = 17
+	Mark.Font = Enum.Font.GothamBold
+	Mark.Visible = false
+	Mark.Parent = Check
 
-	--------------------------------------------------
-	-- NOME
-	--------------------------------------------------
+	local enabled = default
 
-	local label = Instance.new("TextLabel")
+	local function Update()
 
-	label.Size = UDim2.new(1, -70, 1, 0)
-	label.Position = UDim2.new(0, 15, 0, 0)
-
-	label.BackgroundTransparency = 1
-
-	label.Text = nome
-	label.TextColor3 = Color3.fromRGB(225, 225, 225)
-
-	label.TextSize = 14
-	label.Font = Enum.Font.Gotham
-
-	label.TextXAlignment = Enum.TextXAlignment.Left
-
-	label.Active = false
-	label.Parent = option
-
-	--------------------------------------------------
-	-- INDICADOR
-	--------------------------------------------------
-
-	local indicator = Instance.new("Frame")
-
-	indicator.Size = UDim2.new(0, 22, 0, 22)
-	indicator.Position = UDim2.new(1, -37, 0.5, -11)
-
-	indicator.BackgroundColor3 = Color3.fromRGB(40, 40, 44)
-
-	indicator.BorderSizePixel = 1
-	indicator.BorderColor3 = Color3.fromRGB(120, 120, 125)
-
-	indicator.Active = false
-	indicator.Parent = option
-
-	local indicatorCorner = Instance.new("UICorner")
-	indicatorCorner.CornerRadius = UDim.new(0, 4)
-	indicatorCorner.Parent = indicator
-
-	--------------------------------------------------
-	-- ESTADO
-	--------------------------------------------------
-
-	local ativo = false
-
-	option.MouseButton1Click:Connect(function()
-
-		ativo = not ativo
-
-		if ativo then
-
-			indicator.BackgroundColor3 =
-				Color3.fromRGB(90, 160, 230)
-
-			indicator.BorderColor3 =
-				Color3.fromRGB(160, 205, 255)
-
-			option.BackgroundColor3 =
-				Color3.fromRGB(55, 58, 64)
-
-			label.Text = nome .. "  [ON]"
-
+		if enabled then
+			Check.BackgroundColor3 = Color3.fromRGB(65, 135, 195)
+			Check.BorderColor3 = Color3.fromRGB(85, 155, 215)
+			Mark.Visible = true
 		else
-
-			indicator.BackgroundColor3 =
-				Color3.fromRGB(40, 40, 44)
-
-			indicator.BorderColor3 =
-				Color3.fromRGB(120, 120, 125)
-
-			option.BackgroundColor3 =
-				Color3.fromRGB(43, 43, 48)
-
-			label.Text = nome
-
+			Check.BackgroundColor3 = Color3.fromRGB(42, 42, 46)
+			Check.BorderColor3 = Color3.fromRGB(135, 135, 140)
+			Mark.Visible = false
 		end
 
-	end)
-
-end
-
---------------------------------------------------
--- OPÇÕES VISUAIS
---------------------------------------------------
-
-createOption("Enable ESP", 45)
-createOption("Enable Players", 105)
-createOption("Enable Boxes", 165)
-createOption("Enable Names", 225)
-createOption("Enable Distance", 285)
-
---------------------------------------------------
--- ENCONTRAR O BOTÃO VISUAL EXISTENTE
--- NÃO CRIA OUTRO BOTÃO
---------------------------------------------------
-
-local existingVisualButton = nil
-
-for _, objeto in ipairs(sidebar:GetChildren()) do
-
-	if objeto:IsA("TextButton") then
-
-		if objeto.Text:find("Visual") then
-
-			existingVisualButton = objeto
-			break
-
-		end
-
+		callback(enabled)
 	end
 
-end
-
---------------------------------------------------
--- CLICAR NO VISUAL EXISTENTE
---------------------------------------------------
-
-if existingVisualButton then
-
-	existingVisualButton.MouseButton1Click:Connect(function()
-
-		panel.Visible = false
-		button.Visible = false
-
-		visualWindow.Visible = true
-
+	Button.MouseButton1Click:Connect(function()
+		enabled = not enabled
+		Update()
 	end)
 
+	Update()
 end
 
 --------------------------------------------------
--- FECHAR VISUALS
+-- OPÇÕES
 --------------------------------------------------
 
-visualClose.MouseButton1Click:Connect(function()
-
-	visualWindow.Visible = false
-
-	panel.Visible = true
-	button.Visible = false
-
+CreateOption("Enable Esp", 15, true, function(value)
+	ESP = value
 end)
 
-print("VORTEX VISUALS ADICIONADO")
+CreateOption("Enable Players", 80, true, function(value)
+	PLAYERS = value
+end)
 
-print("VORTEX TESTE COM SIDEBAR CARREGADO")
+CreateOption("Enable Boxes", 145, true, function(value)
+	BOXES = value
+end)
+
+CreateOption("Enable Names", 210, true, function(value)
+	NAMES = value
+end)
+
+CreateOption("Enable Distance", 275, true, function(value)
+	DISTANCE = value
+end)
+
+--------------------------------------------------
+-- COR DO TIME
+--------------------------------------------------
+
+local function GetTeamColor(player)
+
+	if player.Team then
+		return player.Team.TeamColor.Color
+	end
+
+	return Color3.fromRGB(255, 255, 255)
+end
+
+--------------------------------------------------
+-- CRIAR ESP
+--------------------------------------------------
+
+local function CreateESP(player)
+
+	if player == LocalPlayer then
+		return
+	end
+
+	if ESPData[player] then
+		return
+	end
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "TeamESP"
+	highlight.FillTransparency = 1
+	highlight.OutlineTransparency = 0
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Enabled = false
+
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "PlayerInfo"
+	billboard.Size = UDim2.new(0, 200, 0, 50)
+	billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+	billboard.AlwaysOnTop = true
+	billboard.Enabled = false
+
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.TextStrokeTransparency = 0
+	text.TextSize = 14
+	text.Font = Enum.Font.GothamBold
+	text.Parent = billboard
+
+	ESPData[player] = {
+		Highlight = highlight,
+		Billboard = billboard,
+		Text = text
+	}
+end
+
+--------------------------------------------------
+-- REMOVER ESP
+--------------------------------------------------
+
+local function RemoveESP(player)
+
+	if ESPData[player] then
+
+		ESPData[player].Highlight:Destroy()
+		ESPData[player].Billboard:Destroy()
+
+		ESPData[player] = nil
+	end
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+	CreateESP(player)
+end
+
+Players.PlayerAdded:Connect(CreateESP)
+Players.PlayerRemoving:Connect(RemoveESP)
+
+--------------------------------------------------
+-- ATUALIZAÇÃO
+--------------------------------------------------
+
+RunService.RenderStepped:Connect(function()
+
+	for player, data in pairs(ESPData) do
+
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+
+		if not character or not root or not ESP or not PLAYERS then
+
+			data.Highlight.Enabled = false
+			data.Billboard.Enabled = false
+
+			continue
+		end
+
+		--------------------------------------------------
+		-- COR DO TIME
+		--------------------------------------------------
+
+		local teamColor = GetTeamColor(player)
+
+		data.Highlight.OutlineColor = teamColor
+		data.Text.TextColor3 = teamColor
+
+		--------------------------------------------------
+		-- BOX
+		--------------------------------------------------
+
+		data.Highlight.Adornee = character
+		data.Highlight.Enabled = BOXES
+
+		--------------------------------------------------
+		-- NOME / DISTÂNCIA
+		--------------------------------------------------
+
+		local myCharacter = LocalPlayer.Character
+		local myRoot = myCharacter
+			and myCharacter:FindFirstChild("HumanoidRootPart")
+
+		if myRoot then
+
+			local distance = math.floor(
+				(myRoot.Position - root.Position).Magnitude
+			)
+
+			local text = ""
+
+			if NAMES then
+				text = player.DisplayName
+			end
+
+			if DISTANCE then
+
+				if text ~= "" then
+					text = text .. "\n"
+				end
+
+				text = text .. distance .. " studs"
+			end
+
+			data.Text.Text = text
+			data.Billboard.Parent = root
+			data.Billboard.Enabled = NAMES or DISTANCE
+		end
+	end
+end)
+
+--------------------------------------------------
+-- TECLA K
+--------------------------------------------------
+
+UserInputService.InputBegan:Connect(function(input, processed)
+
+	if processed then
+		return
+	end
+
+	if input.KeyCode == Enum.KeyCode.K then
+		Main.Visible = not Main.Visible
+	end
+end)
+
+--------------------------------------------------
+-- ARRASTAR PAINEL
+--------------------------------------------------
+
+local dragging = false
+local dragStart
+local startPosition
+
+TopBar.InputBegan:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+		dragging = true
+		dragStart = input.Position
+		startPosition = Main.Position
+
+		input.Changed:Connect(function()
+
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+
+		local delta = input.Position - dragStart
+
+		Main.Position = UDim2.new(
+			startPosition.X.Scale,
+			startPosition.X.Offset + delta.X,
+			startPosition.Y.Scale,
+			startPosition.Y.Offset + delta.Y
+		)
+	end
+end)
