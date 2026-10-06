@@ -37,8 +37,8 @@ Gui.Parent = PlayerGui
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 800, 0, 530)
-Main.Position = UDim2.new(0.5, -400, 0.5, -265)
+Main.Size = UDim2.new(0, 700, 0, 460)
+Main.Position = UDim2.new(0.5, -350, 0.5, -230)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 29)
 Main.BorderSizePixel = 0
 Main.Visible = false
@@ -54,7 +54,7 @@ MainCorner.Parent = Main
 
 local Top = Instance.new("Frame")
 Top.Name = "Top"
-Top.Size = UDim2.new(0, 172, 0, 36)
+Top.Size = UDim2.new(0, 150, 0, 32)
 Top.Position = UDim2.new(0, 5, 0, 4)
 Top.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 Top.BorderSizePixel = 0
@@ -87,7 +87,7 @@ Title.Parent = Top
 
 local Close = Instance.new("TextButton")
 Close.Name = "Close"
-Close.Size = UDim2.new(0, 36, 0, 36)
+Close.Size = UDim2.new(0, 32, 0, 32)
 Close.Position = UDim2.new(1, -43, 0, 4)
 Close.BackgroundTransparency = 1
 Close.Text = "×"
@@ -107,8 +107,8 @@ end)
 
 local Address = Instance.new("Frame")
 Address.Name = "Address"
-Address.Size = UDim2.new(1, -12, 0, 36)
-Address.Position = UDim2.new(0, 6, 0, 46)
+Address.Size = UDim2.new(1, -12, 0, 32)
+Address.Position = UDim2.new(0, 6, 0, 40)
 Address.BackgroundColor3 = Color3.fromRGB(45, 45, 51)
 Address.BorderSizePixel = 0
 Address.Parent = Main
@@ -145,8 +145,8 @@ AddressText.Parent = Address
 
 local Content = Instance.new("Frame")
 Content.Name = "Content"
-Content.Size = UDim2.new(1, -12, 1, -108)
-Content.Position = UDim2.new(0, 6, 0, 88)
+Content.Size = UDim2.new(1, -12, 1, -94)
+Content.Position = UDim2.new(0, 6, 0, 77)
 Content.BackgroundColor3 = Color3.fromRGB(37, 37, 42)
 Content.BorderSizePixel = 0
 Content.ClipsDescendants = true
@@ -297,13 +297,13 @@ end
 
 local function CreateHomeIconButton(x, iconText, tooltip, callback)
 	local Button = Instance.new("TextButton")
-	Button.Size = UDim2.new(0, 72, 0, 72)
-	Button.Position = UDim2.new(0.5, x, 0, 238)
+	Button.Size = UDim2.new(0, 60, 0, 60)
+	Button.Position = UDim2.new(0.5, x, 0, 205)
 	Button.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
 	Button.BorderSizePixel = 0
 	Button.Text = iconText
 	Button.TextColor3 = Color3.fromRGB(225, 225, 230)
-	Button.TextSize = 25
+	Button.TextSize = 22
 	Button.Font = Enum.Font.GothamBold
 	Button.AutoButtonColor = false
 	Button.Parent = Content
@@ -427,7 +427,7 @@ function ShowMainMenu()
 	--------------------------------------------------
 
 	local Profile = Instance.new("Frame")
-	Profile.Size = UDim2.new(1, -30, 0, 132)
+	Profile.Size = UDim2.new(1, -30, 0, 112)
 	Profile.Position = UDim2.new(0, 15, 0, 15)
 	Profile.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
 	Profile.BorderSizePixel = 0
@@ -465,19 +465,19 @@ function ShowMainMenu()
 
 	local Welcome = Instance.new("TextLabel")
 	Welcome.Size = UDim2.new(0, 470, 0, 48)
-	Welcome.Position = UDim2.new(0, 136, 0, 16)
+	Welcome.Position = UDim2.new(0, 116, 0, 12)
 	Welcome.BackgroundTransparency = 1
 	Welcome.RichText = true
 	Welcome.Text = 'Welcome,  <font color="rgb(105,170,225)"><b>' .. Player.DisplayName .. '</b></font>'
 	Welcome.TextColor3 = Color3.fromRGB(91, 159, 215)
-	Welcome.TextSize = 27
+	Welcome.TextSize = 23
 	Welcome.Font = Enum.Font.Gotham
 	Welcome.TextXAlignment = Enum.TextXAlignment.Left
 	Welcome.Parent = Profile
 
 	local Username = Instance.new("TextLabel")
 	Username.Size = UDim2.new(0, 420, 0, 28)
-	Username.Position = UDim2.new(0, 136, 0, 58)
+	Username.Position = UDim2.new(0, 116, 0, 49)
 	Username.BackgroundTransparency = 1
 	Username.Text = "@" .. Player.Name
 	Username.TextColor3 = Color3.fromRGB(72, 146, 204)
@@ -488,7 +488,7 @@ function ShowMainMenu()
 
 	local Clock = Instance.new("TextLabel")
 	Clock.Size = UDim2.new(0, 160, 0, 26)
-	Clock.Position = UDim2.new(0, 136, 0, 88)
+	Clock.Position = UDim2.new(0, 116, 0, 74)
 	Clock.BackgroundTransparency = 1
 	Clock.Text = os.date("%H:%M")
 	Clock.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -524,10 +524,10 @@ function ShowMainMenu()
 	-- QUATRO BOTÕES CENTRAIS
 	--------------------------------------------------
 
-	CreateHomeIconButton(-165, "♙", "Jogador", ShowPlayerMenu)
-	CreateHomeIconButton(-78, "◉", "Visual", ShowVisualMenu)
+	CreateHomeIconButton(-138, "♙", "Jogador", ShowPlayerMenu)
+	CreateHomeIconButton(-68, "◉", "Visual", ShowVisualMenu)
 	CreateHomeIconButton(9, "◇", "Configuração", ShowConfigMenu)
-	CreateHomeIconButton(96, "V", "Vortex", function()
+	CreateHomeIconButton(82, "V", "Vortex", function()
 		Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Vortex Ready</font>'
 	end)
 end
