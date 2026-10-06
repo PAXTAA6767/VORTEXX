@@ -21,6 +21,8 @@ local Settings = {
 	GodMode = false,
 	Aimbot = false,
 	AimbotDistance = 100,
+	GuidedAim = false,
+	GuidedAimDistance = 100,
 
 	-- Interface
 	ToggleKey = Enum.KeyCode.K,
@@ -967,9 +969,107 @@ function ShowPlayerMenu()
 	DistanceHint.TextXAlignment = Enum.TextXAlignment.Left
 	DistanceHint.Parent = PlayerScroll
 
+
+	-- MIRA TELEGUIDADA - opção separada do Aimbot
+	CreateOption(PlayerScroll, "Mira Teleguiada", 500, Settings.GuidedAim, function(value)
+		Settings.GuidedAim = value
+	end)
+
+	local GuidedHint = Instance.new("TextLabel")
+	GuidedHint.Size = UDim2.new(1, -32, 0, 22)
+	GuidedHint.Position = UDim2.new(0, 16, 0, 558)
+	GuidedHint.BackgroundTransparency = 1
+	GuidedHint.Text = "Trava a mira em um inimigo e acompanha seus movimentos."
+	GuidedHint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	GuidedHint.TextSize = 12
+	GuidedHint.Font = Enum.Font.Gotham
+	GuidedHint.TextXAlignment = Enum.TextXAlignment.Left
+	GuidedHint.Parent = PlayerScroll
+
+	local GuidedDistanceCard = Instance.new("Frame")
+	GuidedDistanceCard.Size = UDim2.new(1, -32, 0, 58)
+	GuidedDistanceCard.Position = UDim2.new(0, 16, 0, 594)
+	GuidedDistanceCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	GuidedDistanceCard.BorderSizePixel = 0
+	GuidedDistanceCard.Parent = PlayerScroll
+
+	local GuidedDistanceCorner = Instance.new("UICorner")
+	GuidedDistanceCorner.CornerRadius = UDim.new(0, 8)
+	GuidedDistanceCorner.Parent = GuidedDistanceCard
+
+	local GuidedDistanceLabel = Instance.new("TextLabel")
+	GuidedDistanceLabel.Size = UDim2.new(1, -230, 1, 0)
+	GuidedDistanceLabel.Position = UDim2.new(0, 16, 0, 0)
+	GuidedDistanceLabel.BackgroundTransparency = 1
+	GuidedDistanceLabel.Text = "Distância Mira Teleguiada"
+	GuidedDistanceLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
+	GuidedDistanceLabel.TextSize = 17
+	GuidedDistanceLabel.Font = Enum.Font.Gotham
+	GuidedDistanceLabel.TextXAlignment = Enum.TextXAlignment.Left
+	GuidedDistanceLabel.Parent = GuidedDistanceCard
+
+	local GuidedDistanceInput = Instance.new("TextBox")
+	GuidedDistanceInput.Size = UDim2.new(0, 142, 0, 34)
+	GuidedDistanceInput.Position = UDim2.new(1, -158, 0.5, -17)
+	GuidedDistanceInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+	GuidedDistanceInput.BorderSizePixel = 0
+	GuidedDistanceInput.Text = tostring(Settings.GuidedAimDistance)
+	GuidedDistanceInput.PlaceholderText = "1 - 500 m"
+	GuidedDistanceInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
+	GuidedDistanceInput.TextColor3 = Color3.fromRGB(220, 220, 225)
+	GuidedDistanceInput.TextSize = 14
+	GuidedDistanceInput.Font = Enum.Font.Gotham
+	GuidedDistanceInput.ClearTextOnFocus = false
+	GuidedDistanceInput.Parent = GuidedDistanceCard
+
+	local GuidedDistanceStroke = Instance.new("UIStroke")
+	GuidedDistanceStroke.Thickness = 1.5
+	GuidedDistanceStroke.Color = GetTheme().Accent
+	GuidedDistanceStroke.Parent = GuidedDistanceInput
+
+	local GuidedDistanceInputCorner = Instance.new("UICorner")
+	GuidedDistanceInputCorner.CornerRadius = UDim.new(0, 8)
+	GuidedDistanceInputCorner.Parent = GuidedDistanceInput
+
+	local GuidedDistanceHint = Instance.new("TextLabel")
+	GuidedDistanceHint.Size = UDim2.new(1, -32, 0, 22)
+	GuidedDistanceHint.Position = UDim2.new(0, 16, 0, 657)
+	GuidedDistanceHint.BackgroundTransparency = 1
+	GuidedDistanceHint.Text = "Alcance independente: escolha de 1 a 500 metros."
+	GuidedDistanceHint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	GuidedDistanceHint.TextSize = 12
+	GuidedDistanceHint.Font = Enum.Font.Gotham
+	GuidedDistanceHint.TextXAlignment = Enum.TextXAlignment.Left
+	GuidedDistanceHint.Parent = PlayerScroll
+
+	local function applyGuidedAimDistance()
+		local raw = GuidedDistanceInput.Text:gsub("[^%d]", "")
+		local value = tonumber(raw) or Settings.GuidedAimDistance
+		value = math.clamp(math.floor(value + 0.5), 1, 500)
+		Settings.GuidedAimDistance = value
+		GuidedDistanceInput.Text = tostring(value)
+	end
+
+	GuidedDistanceInput.FocusLost:Connect(applyGuidedAimDistance)
+
+	GuidedDistanceInput:GetPropertyChangedSignal("Text"):Connect(function()
+		local clean = GuidedDistanceInput.Text:gsub("[^%d]", "")
+		if clean ~= GuidedDistanceInput.Text then
+			GuidedDistanceInput.Text = clean
+			return
+		end
+
+		if clean ~= "" then
+			local value = tonumber(clean)
+			if value and value > 500 then
+				GuidedDistanceInput.Text = "500"
+			end
+		end
+	end)
+
 	local BottomSpace = Instance.new("Frame")
 	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
-	BottomSpace.Position = UDim2.new(0, 0, 0, 496)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 694)
 	BottomSpace.BackgroundTransparency = 1
 	BottomSpace.Parent = PlayerScroll
 
@@ -1874,6 +1974,86 @@ local function getClosestAimbotTarget()
 
 	return closestHead
 end
+
+
+--------------------------------------------------
+-- MIRA TELEGUIDADA - LOCK-ON INDEPENDENTE
+--------------------------------------------------
+
+local GuidedAimTarget = nil
+
+local function isValidGuidedTarget(targetPlayer)
+	if not targetPlayer or targetPlayer == Player then
+		return false
+	end
+
+	local localCharacter = Player.Character
+	local localRoot = getRoot(localCharacter)
+	local character = targetPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local head = character and character:FindFirstChild("Head")
+	local root = getRoot(character)
+
+	if not localRoot or not humanoid or humanoid.Health <= 0 or not head or not root then
+		return false
+	end
+
+	local localRole = getRoleAndColor(Player)
+	local targetRole = getRoleAndColor(targetPlayer)
+	if not isAimbotEnemy(localRole, targetRole) then
+		return false
+	end
+
+	local maxDistance = Settings.GuidedAimDistance * 3.57
+	return (root.Position - localRoot.Position).Magnitude <= maxDistance
+end
+
+local function getClosestGuidedTarget()
+	local localRoot = getRoot(Player.Character)
+	if not localRoot then return nil end
+
+	local bestPlayer = nil
+	local bestDistance = math.huge
+	local maxDistance = Settings.GuidedAimDistance * 3.57
+
+	for _, targetPlayer in ipairs(Players:GetPlayers()) do
+		if isValidGuidedTarget(targetPlayer) then
+			local root = getRoot(targetPlayer.Character)
+			local distance = (root.Position - localRoot.Position).Magnitude
+			if distance <= maxDistance and distance < bestDistance then
+				bestDistance = distance
+				bestPlayer = targetPlayer
+			end
+		end
+	end
+
+	return bestPlayer
+end
+
+RunService:BindToRenderStep("VortexGuidedAim", Enum.RenderPriority.Camera.Value + 1, function()
+	if not Settings.GuidedAim then
+		GuidedAimTarget = nil
+		return
+	end
+
+	-- Mantém o mesmo jogador enquanto ele continuar válido:
+	-- a mira fica realmente "grudada" nele em vez de trocar a cada frame.
+	if not isValidGuidedTarget(GuidedAimTarget) then
+		GuidedAimTarget = getClosestGuidedTarget()
+	end
+
+	if not GuidedAimTarget then
+		return
+	end
+
+	local character = GuidedAimTarget.Character
+	local head = character and character:FindFirstChild("Head")
+	local camera = workspace.CurrentCamera
+
+	if camera and head then
+		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, head.Position)
+	end
+end)
 
 RunService.RenderStepped:Connect(function()
 	if not Settings.Aimbot then
