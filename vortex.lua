@@ -44,7 +44,7 @@ local getRoleAndColor
 
 --------------------------------------------------
 -- WALK SPEED - JOGADOR
--- 0 = NORMAL | 1-300 = ACRÉSCIMO SOBRE A VELOCIDADE BASE
+-- 0 = NORMAL | 1-200 = ACRÉSCIMO SOBRE A VELOCIDADE BASE
 --------------------------------------------------
 
 local NormalWalkSpeed = 16
@@ -96,7 +96,7 @@ end
 
 local function setWalkSpeedBoost(value)
 	value = tonumber(value) or 0
-	value = math.clamp(math.floor(value + 0.5), 0, 300)
+	value = math.clamp(math.floor(value + 0.5), 0, 200)
 
 	local humanoid = captureHumanoid()
 
@@ -936,7 +936,7 @@ function ShowPlayerMenu()
 	WalkInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
 	WalkInput.BorderSizePixel = 0
 	WalkInput.Text = tostring(Settings.WalkSpeedBoost)
-	WalkInput.PlaceholderText = "0 - 300"
+	WalkInput.PlaceholderText = "0 - 200"
 	WalkInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
 	WalkInput.TextColor3 = Color3.fromRGB(220, 220, 225)
 	WalkInput.TextSize = 14
@@ -967,7 +967,7 @@ function ShowPlayerMenu()
 	Hint.Size = UDim2.new(1, -32, 0, 22)
 	Hint.Position = UDim2.new(0, 16, 0, 81)
 	Hint.BackgroundTransparency = 1
-	Hint.Text = "0 = normal  •  1-300 = aumento sobre a velocidade base"
+	Hint.Text = "0 = normal  •  1-200 = aumento sobre a velocidade base"
 	Hint.TextColor3 = Color3.fromRGB(125, 125, 132)
 	Hint.TextSize = 12
 	Hint.Font = Enum.Font.Gotham
@@ -1183,8 +1183,8 @@ function ShowPlayerMenu()
 
 		if clean ~= "" then
 			local value = tonumber(clean)
-			if value and value > 300 then
-				WalkInput.Text = "300"
+			if value and value > 200 then
+				WalkInput.Text = "200"
 			end
 		end
 	end)
