@@ -473,13 +473,38 @@ local function getRoot(character)
     return character and character:FindFirstChild("HumanoidRootPart")
 end
 
--- Cor automática baseada na equipe do jogador.
-local function getTeamColor(plr)
-    if plr.Team then
-        return plr.Team.TeamColor.Color
+-- Identifica o papel pelo nome da equipe.
+-- Polícia = azul | Ladrão/Criminoso = vermelho | desconhecido = branco
+local function getRoleAndColor(plr)
+    local teamName = plr.Team and plr.Team.Name or ""
+    local name = string.lower(teamName)
+
+    local policeWords = {
+        "policia", "polícia", "police", "cop", "sheriff", "officer", "guarda"
+    }
+
+    local thiefWords = {
+        "ladrao", "ladrão", "thief", "criminal", "criminoso", "bandido", "robber", "gangster"
+    }
+
+    for _, word in ipairs(policeWords) do
+        if string.find(name, word, 1, true) then
+            return "Polícia", Color3.fromRGB(70, 145, 255)
+        end
     end
 
-    return plr.TeamColor.Color
+    for _, word in ipairs(thiefWords) do
+        if string.find(name, word, 1, true) then
+            return "Ladrão", Color3.fromRGB(255, 75, 75)
+        end
+    end
+
+    return "Outro", Color3.fromRGB(235, 235, 235)
+end
+
+local function getTeamColor(plr)
+    local _, color = getRoleAndColor(plr)
+    return color
 end
 
 local function updateESP(plr)
@@ -563,9 +588,10 @@ local function updateESP(plr)
         end
 
         local parts = {}
+        local role = getRoleAndColor(plr)
 
         if Settings.EnableNames then
-            table.insert(parts, plr.Name)
+            table.insert(parts, plr.Name .. " [" .. role .. "]")
         end
 
         if Settings.EnableDistance then
