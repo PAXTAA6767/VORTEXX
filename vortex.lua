@@ -473,6 +473,39 @@ local function getRoot(character)
     return character and character:FindFirstChild("HumanoidRootPart")
 end
 
+local function darkTeamColor(color)
+    -- Mantém a mesma tonalidade da equipe, mas sem aparência luminosa.
+    return Color3.new(
+        math.clamp(color.R * 0.58, 0, 1),
+        math.clamp(color.G * 0.58, 0, 1),
+        math.clamp(color.B * 0.58, 0, 1)
+    )
+end
+
+local function destroyTracer(data)
+    if not data then return end
+
+    if data.Tracer then
+        data.Tracer:Destroy()
+        data.Tracer = nil
+    end
+
+    if data.TracerAttachment then
+        data.TracerAttachment:Destroy()
+        data.TracerAttachment = nil
+    end
+end
+
+local function removeLocalTracerOrigin()
+    local localRoot = getRoot(Player.Character)
+    if not localRoot then return end
+
+    local origin = localRoot:FindFirstChild("VortexTracerOrigin")
+    if origin then
+        origin:Destroy()
+    end
+end
+
 -- Identifica o papel pela equipe.
 -- Prisioneiro = laranja | Polícia = azul | Ladrão = vermelho
 local function getRoleAndColor(plr)
@@ -664,29 +697,37 @@ local function updateESP(plr)
         data.Label = nil
     end
 
-    -- Tracer visual simples para o seu próprio jogo
-    -- Linha um pouco mais grossa e com um tom mais escuro da equipe.
-    local _, tracerColor = getRoleAndColor(plr)
-    if tracerColor then
-        tracerColor = tracerColor:Lerp(Color3.new(0, 0, 0), 0.28)
-    end
+    -- Tracer: mesma cor da equipe, porém mais escura e sem emissão.
+    local tracerColor = darkTeamColor(teamColor)
 
     if Settings.EnableTracers then
-        if not data.Tracer then
-            local attachment = Instance.new("Attachment")
-            attachment.Name = "VortexTracerAttachment"
-            attachment.Parent = root
+        local localRoot = getRoot(Player.Character)
 
-            local localCharacter = Player.Character
-            local localRoot = getRoot(localCharacter)
+        -- Se o jogador local morreu/respawnou, o Beam antigo fica preso no root antigo.
+        -- Nesse caso, removemos e recriamos automaticamente.
+        if data.Tracer and (
+            not data.Tracer.Parent
+            or not data.Tracer.Attachment0
+            or data.Tracer.Attachment0.Parent ~= localRoot
+            or not data.Tracer.Attachment1
+            or data.Tracer.Attachment1.Parent ~= root
+        ) then
+            destroyTracer(data)
+        end
 
-            if localRoot then
-                local fromAttachment = localRoot:FindFirstChild("VortexTracerOrigin")
-                if not fromAttachment then
-                    fromAttachment = Instance.new("Attachment")
-                    fromAttachment.Name = "VortexTracerOrigin"
-                    fromAttachment.Parent = localRoot
-                end
+        if localRoot then
+            local fromAttachment = localRoot:FindFirstChild("VortexTracerOrigin")
+
+            if not fromAttachment then
+                fromAttachment = Instance.new("Attachment")
+                fromAttachment.Name = "VortexTracerOrigin"
+                fromAttachment.Parent = localRoot
+            end
+
+            if not data.Tracer then
+                local attachment = Instance.new("Attachment")
+                attachment.Name = "VortexTracerAttachment"
+                attachment.Parent = root
 
                 local beam = Instance.new("Beam")
                 beam.Name = "VortexTracer"
@@ -695,25 +736,25 @@ local function updateESP(plr)
                 beam.FaceCamera = true
                 beam.Width0 = 0.085
                 beam.Width1 = 0.085
-                beam.Color = ColorSequence.new(tracerColor or teamColor)
-                beam.Transparency = NumberSequence.new(0.15)
-                beam.LightEmission = 1
+                beam.Color = ColorSequence.new(tracerColor)
+                beam.Transparency = NumberSequence.new(0)
+                beam.LightEmission = 0
+                beam.LightInfluence = 1
                 beam.Parent = localRoot
+
                 data.Tracer = beam
                 data.TracerAttachment = attachment
             else
-                attachment:Destroy()
+                data.Tracer.Color = ColorSequence.new(tracerColor)
+                data.Tracer.Transparency = NumberSequence.new(0)
+                data.Tracer.LightEmission = 0
+                data.Tracer.LightInfluence = 1
             end
+        else
+            destroyTracer(data)
         end
-    elseif data.Tracer or data.TracerAttachment then
-        if data.Tracer then data.Tracer:Destroy() end
-        if data.TracerAttachment then data.TracerAttachment:Destroy() end
-        data.Tracer = nil
-        data.TracerAttachment = nil
-    end
-
-    if data.Tracer then
-        data.Tracer.Color = ColorSequence.new(tracerColor or teamColor)
+    else
+        destroyTracer(data)
     end
 end
 
@@ -724,8 +765,10 @@ local function refreshAllESP()
 end
 
 Players.PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(function()
-        task.wait(0.4)
+    plr.CharacterAdded:Connect(function(character)
+        character:WaitForChild("HumanoidRootPart", 5)
+        task.wait(0.15)
+        destroyESP(plr)
         updateESP(plr)
     end)
 end)
@@ -736,12 +779,27 @@ end)
 
 for _, plr in ipairs(Players:GetPlayers()) do
     if plr ~= Player then
-        plr.CharacterAdded:Connect(function()
-            task.wait(0.4)
+        plr.CharacterAdded:Connect(function(character)
+            character:WaitForChild("HumanoidRootPart", 5)
+            task.wait(0.15)
+            destroyESP(plr)
             updateESP(plr)
         end)
     end
 end
+
+-- Quando o jogador local respawna, recria as linhas usando o novo personagem.
+Player.CharacterAdded:Connect(function(character)
+    character:WaitForChild("HumanoidRootPart", 5)
+    task.wait(0.2)
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        destroyTracer(ESP[plr])
+    end
+
+    removeLocalTracerOrigin()
+    refreshAllESP()
+end)
 
 -- Reaplica configurações dos botões, cores de equipe, distância e novos personagens.
 task.spawn(function()
