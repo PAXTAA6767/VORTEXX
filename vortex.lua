@@ -1,34 +1,40 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
 --------------------------------------------------
 -- CONFIGURAÇÕES
 --------------------------------------------------
 
-local ESP = true
-local PLAYERS = true
-local BOXES = true
-local NAMES = true
-local DISTANCE = true
-local TRACERS = false
+local Settings = {
+	-- Jogador
+	EnablePlayers = true,
+	EnableSelf = false,
 
-local ESPData = {}
+	-- Visual
+	EnableESP = true,
+	EnableBoxes = true,
+	EnableNames = true,
+	EnableDistance = true,
+	EnableTracers = false,
+
+	-- Configuração
+	TeamColor = true,
+}
 
 --------------------------------------------------
 -- GUI
 --------------------------------------------------
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "VitexxTestPanel"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = PlayerGui
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "VitexxPanel"
+Gui.ResetOnSpawn = false
+Gui.Parent = PlayerGui
 
 --------------------------------------------------
--- PAINEL
+-- JANELA PRINCIPAL
 --------------------------------------------------
 
 local Main = Instance.new("Frame")
@@ -37,187 +43,175 @@ Main.Position = UDim2.new(0.5, -380, 0.5, -250)
 Main.BackgroundColor3 = Color3.fromRGB(35, 35, 39)
 Main.BorderSizePixel = 0
 Main.Visible = false
-Main.Parent = ScreenGui
+Main.Parent = Gui
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = Main
 
 --------------------------------------------------
--- BARRA SUPERIOR
+-- TOPO
 --------------------------------------------------
 
-local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 45)
-TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
-TopBar.BorderSizePixel = 0
-TopBar.Parent = Main
+local Top = Instance.new("Frame")
+Top.Size = UDim2.new(1, 0, 0, 45)
+Top.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
+Top.BorderSizePixel = 0
+Top.Parent = Main
 
 local TopCorner = Instance.new("UICorner")
 TopCorner.CornerRadius = UDim.new(0, 10)
-TopCorner.Parent = TopBar
+TopCorner.Parent = Top
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 18, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "☾  Chaos"
-Title.TextColor3 = Color3.fromRGB(225, 225, 225)
+Title.TextColor3 = Color3.fromRGB(225,225,225)
 Title.TextSize = 15
 Title.Font = Enum.Font.Gotham
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = TopBar
-
---------------------------------------------------
--- FECHAR
---------------------------------------------------
+Title.Parent = Top
 
 local Close = Instance.new("TextButton")
 Close.Size = UDim2.new(0, 40, 0, 40)
 Close.Position = UDim2.new(1, -48, 0, 2)
 Close.BackgroundTransparency = 1
 Close.Text = "×"
-Close.TextColor3 = Color3.fromRGB(220, 220, 220)
+Close.TextColor3 = Color3.fromRGB(220,220,220)
 Close.TextSize = 25
 Close.Font = Enum.Font.Gotham
-Close.Parent = TopBar
+Close.Parent = Top
 
 Close.MouseButton1Click:Connect(function()
 	Main.Visible = false
 end)
 
 --------------------------------------------------
--- ABA
---------------------------------------------------
-
-local Tab = Instance.new("Frame")
-Tab.Size = UDim2.new(0, 155, 0, 35)
-Tab.Position = UDim2.new(0, 165, 0, 5)
-Tab.BackgroundColor3 = Color3.fromRGB(48, 48, 53)
-Tab.BorderSizePixel = 0
-Tab.Parent = TopBar
-
-local TabCorner = Instance.new("UICorner")
-TabCorner.CornerRadius = UDim.new(0, 7)
-TabCorner.Parent = Tab
-
-local TabText = Instance.new("TextLabel")
-TabText.Size = UDim2.new(1, -35, 1, 0)
-TabText.Position = UDim2.new(0, 10, 0, 0)
-TabText.BackgroundTransparency = 1
-TabText.Text = "👁  Visuals"
-TabText.TextColor3 = Color3.fromRGB(220, 220, 220)
-TabText.TextSize = 14
-TabText.Font = Enum.Font.Gotham
-TabText.TextXAlignment = Enum.TextXAlignment.Left
-TabText.Parent = Tab
-
---------------------------------------------------
--- ENDEREÇO
+-- BARRA
 --------------------------------------------------
 
 local Address = Instance.new("TextLabel")
 Address.Size = UDim2.new(1, -30, 0, 34)
 Address.Position = UDim2.new(0, 15, 0, 55)
-Address.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+Address.BackgroundColor3 = Color3.fromRGB(45,45,50)
 Address.BorderSizePixel = 0
-Address.Text = "  🔍   Test Environment / Visuals"
-Address.TextColor3 = Color3.fromRGB(145, 145, 150)
+Address.Text = "  🔍   Test Environment"
+Address.TextColor3 = Color3.fromRGB(145,145,150)
 Address.TextSize = 14
 Address.Font = Enum.Font.Gotham
 Address.TextXAlignment = Enum.TextXAlignment.Left
 Address.Parent = Main
 
 local AddressCorner = Instance.new("UICorner")
-AddressCorner.CornerRadius = UDim.new(0, 7)
+AddressCorner.CornerRadius = UDim.new(0,7)
 AddressCorner.Parent = Address
 
 --------------------------------------------------
--- ÁREA DAS OPÇÕES
+-- CONTAINER
 --------------------------------------------------
 
-local Options = Instance.new("Frame")
-Options.Size = UDim2.new(1, -30, 0, 350)
-Options.Position = UDim2.new(0, 15, 0, 100)
-Options.BackgroundColor3 = Color3.fromRGB(39, 39, 44)
-Options.BorderSizePixel = 0
-Options.Parent = Main
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(1, -30, 1, -105)
+Content.Position = UDim2.new(0,15,0,100)
+Content.BackgroundColor3 = Color3.fromRGB(39,39,44)
+Content.BorderSizePixel = 0
+Content.Parent = Main
 
-local OptionsCorner = Instance.new("UICorner")
-OptionsCorner.CornerRadius = UDim.new(0, 10)
-OptionsCorner.Parent = Options
+local ContentCorner = Instance.new("UICorner")
+ContentCorner.CornerRadius = UDim.new(0,10)
+ContentCorner.Parent = Content
 
 --------------------------------------------------
--- TOGGLE
+-- FUNÇÃO PARA LIMPAR CONTEÚDO
 --------------------------------------------------
 
-local function CreateOption(text, y, default, callback)
+local function ClearContent()
+	for _, object in ipairs(Content:GetChildren()) do
+		object:Destroy()
+	end
+end
+
+--------------------------------------------------
+-- BOTÃO DE OPÇÃO
+--------------------------------------------------
+
+local function CreateOption(parent, text, y, value, callback)
 
 	local Button = Instance.new("TextButton")
 	Button.Size = UDim2.new(1, -30, 0, 55)
-	Button.Position = UDim2.new(0, 15, 0, y)
-	Button.BackgroundColor3 = Color3.fromRGB(48, 48, 53)
+	Button.Position = UDim2.new(0,15,0,y)
+	Button.BackgroundColor3 = Color3.fromRGB(48,48,53)
 	Button.BorderSizePixel = 0
 	Button.Text = ""
 	Button.AutoButtonColor = false
-	Button.Parent = Options
+	Button.Parent = parent
 
 	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 8)
+	Corner.CornerRadius = UDim.new(0,8)
 	Corner.Parent = Button
 
+	--------------------------------------------------
+	-- TEXTO
+	--------------------------------------------------
+
 	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(1, -75, 1, 0)
-	Label.Position = UDim2.new(0, 15, 0, 0)
+	Label.Size = UDim2.new(1,-75,1,0)
+	Label.Position = UDim2.new(0,15,0,0)
 	Label.BackgroundTransparency = 1
 	Label.Text = text
-	Label.TextColor3 = Color3.fromRGB(225, 225, 225)
+	Label.TextColor3 = Color3.fromRGB(225,225,225)
 	Label.TextSize = 19
 	Label.Font = Enum.Font.Gotham
 	Label.TextXAlignment = Enum.TextXAlignment.Left
 	Label.Parent = Button
 
+	--------------------------------------------------
+	-- CHECKBOX
+	--------------------------------------------------
+
 	local Check = Instance.new("Frame")
-	Check.Size = UDim2.new(0, 24, 0, 24)
-	Check.Position = UDim2.new(1, -45, 0.5, -12)
-	Check.BackgroundColor3 = Color3.fromRGB(42, 42, 46)
+	Check.Size = UDim2.new(0,24,0,24)
+	Check.Position = UDim2.new(1,-45,0.5,-12)
+	Check.BackgroundColor3 = Color3.fromRGB(42,42,46)
 	Check.BorderSizePixel = 2
-	Check.BorderColor3 = Color3.fromRGB(135, 135, 140)
+	Check.BorderColor3 = Color3.fromRGB(135,135,140)
 	Check.Parent = Button
 
 	local CheckCorner = Instance.new("UICorner")
-	CheckCorner.CornerRadius = UDim.new(0, 3)
+	CheckCorner.CornerRadius = UDim.new(0,3)
 	CheckCorner.Parent = Check
 
 	local Mark = Instance.new("TextLabel")
-	Mark.Size = UDim2.fromScale(1, 1)
+	Mark.Size = UDim2.fromScale(1,1)
 	Mark.BackgroundTransparency = 1
 	Mark.Text = "✓"
-	Mark.TextColor3 = Color3.new(1, 1, 1)
+	Mark.TextColor3 = Color3.new(1,1,1)
 	Mark.TextSize = 17
 	Mark.Font = Enum.Font.GothamBold
 	Mark.Visible = false
 	Mark.Parent = Check
 
-	local enabled = default
+	local Enabled = value
 
 	local function Update()
 
-		if enabled then
-			Check.BackgroundColor3 = Color3.fromRGB(65, 135, 195)
-			Check.BorderColor3 = Color3.fromRGB(85, 155, 215)
+		if Enabled then
+			Check.BackgroundColor3 = Color3.fromRGB(65,135,195)
+			Check.BorderColor3 = Color3.fromRGB(85,155,215)
 			Mark.Visible = true
 		else
-			Check.BackgroundColor3 = Color3.fromRGB(42, 42, 46)
-			Check.BorderColor3 = Color3.fromRGB(135, 135, 140)
+			Check.BackgroundColor3 = Color3.fromRGB(42,42,46)
+			Check.BorderColor3 = Color3.fromRGB(135,135,140)
 			Mark.Visible = false
 		end
 
-		callback(enabled)
+		callback(Enabled)
 	end
 
 	Button.MouseButton1Click:Connect(function()
-		enabled = not enabled
+		Enabled = not Enabled
 		Update()
 	end)
 
@@ -225,180 +219,222 @@ local function CreateOption(text, y, default, callback)
 end
 
 --------------------------------------------------
--- OPÇÕES
+-- BOTÃO VOLTAR
 --------------------------------------------------
 
-CreateOption("Enable Esp", 15, true, function(value)
-	ESP = value
-end)
+local function CreateBackButton(callback)
 
-CreateOption("Enable Players", 80, true, function(value)
-	PLAYERS = value
-end)
+	local Back = Instance.new("TextButton")
+	Back.Size = UDim2.new(0,110,0,40)
+	Back.Position = UDim2.new(0,15,0,15)
+	Back.BackgroundColor3 = Color3.fromRGB(48,48,53)
+	Back.BorderSizePixel = 0
+	Back.Text = "←  Voltar"
+	Back.TextColor3 = Color3.fromRGB(220,220,220)
+	Back.TextSize = 15
+	Back.Font = Enum.Font.Gotham
+	Back.Parent = Content
 
-CreateOption("Enable Boxes", 145, true, function(value)
-	BOXES = value
-end)
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0,7)
+	Corner.Parent = Back
 
-CreateOption("Enable Names", 210, true, function(value)
-	NAMES = value
-end)
-
-CreateOption("Enable Distance", 275, true, function(value)
-	DISTANCE = value
-end)
-
---------------------------------------------------
--- COR DO TIME
---------------------------------------------------
-
-local function GetTeamColor(player)
-
-	if player.Team then
-		return player.Team.TeamColor.Color
-	end
-
-	return Color3.fromRGB(255, 255, 255)
+	Back.MouseButton1Click:Connect(callback)
 end
 
 --------------------------------------------------
--- CRIAR ESP
+-- MENU PRINCIPAL
 --------------------------------------------------
 
-local function CreateESP(player)
+local function ShowMainMenu()
 
-	if player == LocalPlayer then
-		return
-	end
+	ClearContent()
 
-	if ESPData[player] then
-		return
-	end
+	Address.Text = "  🔍   Test Environment"
 
-	local highlight = Instance.new("Highlight")
-	highlight.Name = "TeamESP"
-	highlight.FillTransparency = 1
-	highlight.OutlineTransparency = 0
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.Enabled = false
+	local Info = Instance.new("TextLabel")
+	Info.Size = UDim2.new(1,-30,0,40)
+	Info.Position = UDim2.new(0,15,0,15)
+	Info.BackgroundTransparency = 1
+	Info.Text = "Selecione uma categoria"
+	Info.TextColor3 = Color3.fromRGB(170,170,175)
+	Info.TextSize = 18
+	Info.Font = Enum.Font.Gotham
+	Info.TextXAlignment = Enum.TextXAlignment.Left
+	Info.Parent = Content
 
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "PlayerInfo"
-	billboard.Size = UDim2.new(0, 200, 0, 50)
-	billboard.StudsOffset = Vector3.new(0, 3.5, 0)
-	billboard.AlwaysOnTop = true
-	billboard.Enabled = false
+	--------------------------------------------------
+	-- JOGADOR
+	--------------------------------------------------
 
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.TextStrokeTransparency = 0
-	text.TextSize = 14
-	text.Font = Enum.Font.GothamBold
-	text.Parent = billboard
+	local PlayerButton = Instance.new("TextButton")
+	PlayerButton.Size = UDim2.new(1,-30,0,80)
+	PlayerButton.Position = UDim2.new(0,15,0,70)
+	PlayerButton.BackgroundColor3 = Color3.fromRGB(48,48,53)
+	PlayerButton.BorderSizePixel = 0
+	PlayerButton.Text = "👤   Jogador"
+	PlayerButton.TextColor3 = Color3.fromRGB(225,225,225)
+	PlayerButton.TextSize = 20
+	PlayerButton.Font = Enum.Font.Gotham
+	PlayerButton.TextXAlignment = Enum.TextXAlignment.Left
+	PlayerButton.Parent = Content
 
-	ESPData[player] = {
-		Highlight = highlight,
-		Billboard = billboard,
-		Text = text
-	}
+	local P = Instance.new("UICorner")
+	P.CornerRadius = UDim.new(0,8)
+	P.Parent = PlayerButton
+
+	PlayerButton.MouseButton1Click:Connect(function()
+		ShowPlayerMenu()
+	end)
+
+	--------------------------------------------------
+	-- VISUAL
+	--------------------------------------------------
+
+	local VisualButton = PlayerButton:Clone()
+	VisualButton.Position = UDim2.new(0,15,0,165)
+	VisualButton.Text = "👁   Visual"
+	VisualButton.Parent = Content
+
+	VisualButton.MouseButton1Click:Connect(function()
+		ShowVisualMenu()
+	end)
+
+	--------------------------------------------------
+	-- CONFIGURAÇÃO
+	--------------------------------------------------
+
+	local ConfigButton = PlayerButton:Clone()
+	ConfigButton.Position = UDim2.new(0,15,0,260)
+	ConfigButton.Text = "⚙   Configuração"
+	ConfigButton.Parent = Content
+
+	ConfigButton.MouseButton1Click:Connect(function()
+		ShowConfigMenu()
+	end)
 end
 
 --------------------------------------------------
--- REMOVER ESP
+-- MENU JOGADOR
 --------------------------------------------------
 
-local function RemoveESP(player)
+function ShowPlayerMenu()
 
-	if ESPData[player] then
+	ClearContent()
 
-		ESPData[player].Highlight:Destroy()
-		ESPData[player].Billboard:Destroy()
+	Address.Text = "  🔍   Test Environment / Player"
 
-		ESPData[player] = nil
-	end
-end
+	CreateBackButton(ShowMainMenu)
 
-for _, player in ipairs(Players:GetPlayers()) do
-	CreateESP(player)
-end
-
-Players.PlayerAdded:Connect(CreateESP)
-Players.PlayerRemoving:Connect(RemoveESP)
-
---------------------------------------------------
--- ATUALIZAÇÃO
---------------------------------------------------
-
-RunService.RenderStepped:Connect(function()
-
-	for player, data in pairs(ESPData) do
-
-		local character = player.Character
-		local root = character and character:FindFirstChild("HumanoidRootPart")
-
-		if not character or not root or not ESP or not PLAYERS then
-
-			data.Highlight.Enabled = false
-			data.Billboard.Enabled = false
-
-			continue
+	CreateOption(
+		Content,
+		"Enable Players",
+		70,
+		Settings.EnablePlayers,
+		function(value)
+			Settings.EnablePlayers = value
 		end
+	)
 
-		--------------------------------------------------
-		-- COR DO TIME
-		--------------------------------------------------
-
-		local teamColor = GetTeamColor(player)
-
-		data.Highlight.OutlineColor = teamColor
-		data.Text.TextColor3 = teamColor
-
-		--------------------------------------------------
-		-- BOX
-		--------------------------------------------------
-
-		data.Highlight.Adornee = character
-		data.Highlight.Enabled = BOXES
-
-		--------------------------------------------------
-		-- NOME / DISTÂNCIA
-		--------------------------------------------------
-
-		local myCharacter = LocalPlayer.Character
-		local myRoot = myCharacter
-			and myCharacter:FindFirstChild("HumanoidRootPart")
-
-		if myRoot then
-
-			local distance = math.floor(
-				(myRoot.Position - root.Position).Magnitude
-			)
-
-			local text = ""
-
-			if NAMES then
-				text = player.DisplayName
-			end
-
-			if DISTANCE then
-
-				if text ~= "" then
-					text = text .. "\n"
-				end
-
-				text = text .. distance .. " studs"
-			end
-
-			data.Text.Text = text
-			data.Billboard.Parent = root
-			data.Billboard.Enabled = NAMES or DISTANCE
+	CreateOption(
+		Content,
+		"Enable Self",
+		135,
+		Settings.EnableSelf,
+		function(value)
+			Settings.EnableSelf = value
 		end
-	end
-end)
+	)
+end
 
 --------------------------------------------------
--- TECLA K
+-- MENU VISUAL
+--------------------------------------------------
+
+function ShowVisualMenu()
+
+	ClearContent()
+
+	Address.Text = "  🔍   Test Environment / Visuals"
+
+	CreateBackButton(ShowMainMenu)
+
+	CreateOption(
+		Content,
+		"Enable ESP",
+		70,
+		Settings.EnableESP,
+		function(value)
+			Settings.EnableESP = value
+		end
+	)
+
+	CreateOption(
+		Content,
+		"Enable Boxes",
+		135,
+		Settings.EnableBoxes,
+		function(value)
+			Settings.EnableBoxes = value
+		end
+	)
+
+	CreateOption(
+		Content,
+		"Enable Names",
+		200,
+		Settings.EnableNames,
+		function(value)
+			Settings.EnableNames = value
+		end
+	)
+
+	CreateOption(
+		Content,
+		"Enable Distance",
+		265,
+		Settings.EnableDistance,
+		function(value)
+			Settings.EnableDistance = value
+		end
+	)
+
+	CreateOption(
+		Content,
+		"Enable Tracers",
+		330,
+		Settings.EnableTracers,
+		function(value)
+			Settings.EnableTracers = value
+		end
+	)
+end
+
+--------------------------------------------------
+-- MENU CONFIGURAÇÃO
+--------------------------------------------------
+
+function ShowConfigMenu()
+
+	ClearContent()
+
+	Address.Text = "  🔍   Test Environment / Settings"
+
+	CreateBackButton(ShowMainMenu)
+
+	CreateOption(
+		Content,
+		"Team Colors",
+		70,
+		Settings.TeamColor,
+		function(value)
+			Settings.TeamColor = value
+		end
+	)
+end
+
+--------------------------------------------------
+-- ABRIR MENU PRINCIPAL COM K
 --------------------------------------------------
 
 UserInputService.InputBegan:Connect(function(input, processed)
@@ -408,7 +444,12 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 
 	if input.KeyCode == Enum.KeyCode.K then
+
 		Main.Visible = not Main.Visible
+
+		if Main.Visible then
+			ShowMainMenu()
+		end
 	end
 end)
 
@@ -416,22 +457,22 @@ end)
 -- ARRASTAR PAINEL
 --------------------------------------------------
 
-local dragging = false
-local dragStart
-local startPosition
+local Dragging = false
+local DragStart
+local StartPosition
 
-TopBar.InputBegan:Connect(function(input)
+Top.InputBegan:Connect(function(input)
 
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 
-		dragging = true
-		dragStart = input.Position
-		startPosition = Main.Position
+		Dragging = true
+		DragStart = input.Position
+		StartPosition = Main.Position
 
 		input.Changed:Connect(function()
 
 			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
+				Dragging = false
 			end
 
 		end)
@@ -440,15 +481,15 @@ end)
 
 UserInputService.InputChanged:Connect(function(input)
 
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+	if Dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 
-		local delta = input.Position - dragStart
+		local Delta = input.Position - DragStart
 
 		Main.Position = UDim2.new(
-			startPosition.X.Scale,
-			startPosition.X.Offset + delta.X,
-			startPosition.Y.Scale,
-			startPosition.Y.Offset + delta.Y
+			StartPosition.X.Scale,
+			StartPosition.X.Offset + Delta.X,
+			StartPosition.Y.Scale,
+			StartPosition.Y.Offset + Delta.Y
 		)
 	end
 end)
