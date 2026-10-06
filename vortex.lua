@@ -473,27 +473,28 @@ local function getRoot(character)
     return character and character:FindFirstChild("HumanoidRootPart")
 end
 
--- Identifica o papel pelo nome da equipe.
--- Polícia = azul | Ladrão/Criminoso = vermelho | desconhecido = branco
+-- Identifica o papel pela equipe.
+-- Prisioneiro = laranja | Polícia = azul | Ladrão = vermelho
 local function getRoleAndColor(plr)
     local team = plr.Team
     local teamName = team and string.lower(team.Name or "") or ""
 
     --------------------------------------------------
-    -- 1) PRIMEIRO IDENTIFICA PELO NOME DA EQUIPE
+    -- 1) NOME DA EQUIPE
     --------------------------------------------------
 
     -- PRISIONEIRO = LARANJA
-    if string.find(teamName, "prison", 1, true)
+    if string.find(teamName, "prisioneiro", 1, true)
+        or string.find(teamName, "prisoner", 1, true)
+        or string.find(teamName, "prison", 1, true)
         or string.find(teamName, "prision", 1, true)
-        or string.find(teamName, "preso", 1, true)
-        or string.find(teamName, "prisioneiro", 1, true) then
+        or string.find(teamName, "preso", 1, true) then
         return "Prisioneiro", Color3.fromRGB(255, 170, 0)
     end
 
     -- POLÍCIA = AZUL
-    if string.find(teamName, "police", 1, true)
-        or string.find(teamName, "policia", 1, true)
+    if string.find(teamName, "policia", 1, true)
+        or string.find(teamName, "police", 1, true)
         or string.find(teamName, "polícia", 1, true)
         or string.find(teamName, "cop", 1, true)
         or string.find(teamName, "sheriff", 1, true)
@@ -502,11 +503,11 @@ local function getRoleAndColor(plr)
         return "Polícia", Color3.fromRGB(70, 145, 255)
     end
 
-    -- LADRÃO/CRIMINOSO = VERMELHO
-    if string.find(teamName, "criminal", 1, true)
-        or string.find(teamName, "criminoso", 1, true)
-        or string.find(teamName, "ladrao", 1, true)
+    -- LADRÃO = VERMELHO
+    if string.find(teamName, "ladrao", 1, true)
         or string.find(teamName, "ladrão", 1, true)
+        or string.find(teamName, "criminal", 1, true)
+        or string.find(teamName, "criminoso", 1, true)
         or string.find(teamName, "thief", 1, true)
         or string.find(teamName, "robber", 1, true)
         or string.find(teamName, "bandido", 1, true)
@@ -515,32 +516,38 @@ local function getRoleAndColor(plr)
     end
 
     --------------------------------------------------
-    -- 2) SE O NOME NÃO BATER, USA A COR DA TEAM
+    -- 2) COR REAL DA TEAM / PLAYER
     --------------------------------------------------
 
-    if team then
-        local brickColor = team.TeamColor
-        local colorName = brickColor and string.lower(brickColor.Name or "") or ""
+    local brickColor = (team and team.TeamColor) or plr.TeamColor
 
-        -- Laranja
-        if string.find(colorName, "orange", 1, true) then
+    if brickColor then
+        local colorName = string.lower(brickColor.Name or "")
+        local color = brickColor.Color
+        local h, sat, val = Color3.toHSV(color)
+
+        -- Laranja: cobre Orange / Bright orange / Deep orange etc.
+        if string.find(colorName, "orange", 1, true)
+            or (h >= 0.045 and h <= 0.13 and sat >= 0.55 and val >= 0.5) then
             return "Prisioneiro", Color3.fromRGB(255, 170, 0)
         end
 
         -- Azul
-        if string.find(colorName, "blue", 1, true) then
+        if string.find(colorName, "blue", 1, true)
+            or (h >= 0.50 and h <= 0.75 and sat >= 0.45 and val >= 0.4) then
             return "Polícia", Color3.fromRGB(70, 145, 255)
         end
 
         -- Vermelho
-        if string.find(colorName, "red", 1, true) then
+        if string.find(colorName, "red", 1, true)
+            or h >= 0.96 or h <= 0.035 then
             return "Ladrão", Color3.fromRGB(255, 70, 70)
         end
     end
 
-    return "Outro", Color3.fromRGB(235, 235, 235)
+    -- Sem equipe reconhecida: não mostra ESP branco/OUTRO.
+    return nil, nil
 end
-
 local function getTeamColor(plr)
     local _, color = getRoleAndColor(plr)
     return color
@@ -563,6 +570,14 @@ local function updateESP(plr)
     local root = getRoot(character)
 
     if not character or not root then
+        destroyESP(plr)
+        return
+    end
+
+    local role, teamColor = getRoleAndColor(plr)
+
+    -- Só exibe jogadores identificados como Polícia, Ladrão ou Prisioneiro.
+    if not role or not teamColor then
         destroyESP(plr)
         return
     end
@@ -596,7 +611,7 @@ local function updateESP(plr)
     end
 
     -- Cor da equipe sempre atualizada.
-    local teamColor = getTeamColor(plr)
+    role, teamColor = getRoleAndColor(plr)
 
     if data.Highlight then
         data.Highlight.FillColor = teamColor
@@ -627,7 +642,6 @@ local function updateESP(plr)
         end
 
         local parts = {}
-        local role = getRoleAndColor(plr)
 
         if Settings.EnableNames then
             table.insert(parts, plr.Name .. " [" .. role .. "]")
