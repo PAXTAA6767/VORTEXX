@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -9,6 +10,9 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 --------------------------------------------------
 
 local Settings = {
+	-- Jogador
+	NoWait = false,
+
 	-- Visual
 	EnableESP = true,
 	EnableBoxes = true,
@@ -20,6 +24,47 @@ local Settings = {
 
 -- Será definido na parte do ESP; permite que os toggles atualizem imediatamente.
 local refreshAllESP
+
+--------------------------------------------------
+-- NO WAIT - PARA INTERAÇÕES COM PROXIMITYPROMPT NO SEU JOGO
+--------------------------------------------------
+
+local OriginalPromptHoldDuration = setmetatable({}, {__mode = "k"})
+
+local function setPromptNoWait(prompt, enabled)
+	if not prompt:IsA("ProximityPrompt") then return end
+
+	if enabled then
+		if OriginalPromptHoldDuration[prompt] == nil then
+			OriginalPromptHoldDuration[prompt] = prompt.HoldDuration
+		end
+		prompt.HoldDuration = 0
+	else
+		local original = OriginalPromptHoldDuration[prompt]
+		if original ~= nil then
+			prompt.HoldDuration = original
+			OriginalPromptHoldDuration[prompt] = nil
+		end
+	end
+end
+
+local function applyNoWait(enabled)
+	for _, object in ipairs(Workspace:GetDescendants()) do
+		if object:IsA("ProximityPrompt") then
+			setPromptNoWait(object, enabled)
+		end
+	end
+end
+
+Workspace.DescendantAdded:Connect(function(object)
+	if Settings.NoWait and object:IsA("ProximityPrompt") then
+		task.defer(function()
+			if object.Parent then
+				setPromptNoWait(object, true)
+			end
+		end)
+	end
+end)
 
 --------------------------------------------------
 -- GUI
@@ -347,20 +392,10 @@ function ShowPlayerMenu()
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Jogador")
 
-	local Info = Instance.new("TextLabel")
-	Info.Size = UDim2.new(1, -32, 0, 80)
-	Info.Position = UDim2.new(0, 16, 0, 82)
-	Info.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
-	Info.BorderSizePixel = 0
-	Info.Text = "Nenhuma opção de jogador adicionada."
-	Info.TextColor3 = Color3.fromRGB(160, 160, 168)
-	Info.TextSize = 15
-	Info.Font = Enum.Font.Gotham
-	Info.Parent = Content
-
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 7)
-	Corner.Parent = Info
+	CreateOption(Content, "No Wait", 70, Settings.NoWait, function(value)
+		Settings.NoWait = value
+		applyNoWait(value)
+	end)
 end
 
 function ShowVisualMenu()
