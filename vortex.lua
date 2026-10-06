@@ -82,12 +82,12 @@ local function applyWalkSpeed()
 		return
 	end
 
-	local targetSpeed = NormalWalkSpeed
+	-- 0 restaura a velocidade padrão do personagem.
+	local targetSpeed = 16
 
-	-- 0 mantém a velocidade base. Valores maiores são somados à base.
-	-- Exemplo: base 16 + valor 10 = velocidade 26.
+	-- Valores maiores são somados à velocidade padrão.
 	if Settings.WalkSpeedBoost > 0 then
-		targetSpeed = NormalWalkSpeed + Settings.WalkSpeedBoost
+		targetSpeed = 16 + Settings.WalkSpeedBoost
 	end
 
 	if humanoid.WalkSpeed ~= targetSpeed then
@@ -101,10 +101,8 @@ local function setWalkSpeedBoost(value)
 
 	local humanoid = captureHumanoid()
 
-	-- Antes de sair do 0, guarda o valor normal atual.
-	if humanoid and Settings.WalkSpeedBoost == 0 and value > 0 then
-		NormalWalkSpeed = humanoid.WalkSpeed
-	end
+	-- A base fica fixa no padrão para que valor 0 nunca herde uma velocidade aumentada.
+	NormalWalkSpeed = 16
 
 	Settings.WalkSpeedBoost = value
 	applyWalkSpeed()
@@ -120,7 +118,7 @@ Player.CharacterAdded:Connect(function(character)
 
 	task.wait(0.15)
 	CurrentHumanoid = humanoid
-	NormalWalkSpeed = humanoid.WalkSpeed
+	NormalWalkSpeed = 16
 	applyWalkSpeed()
 end)
 
