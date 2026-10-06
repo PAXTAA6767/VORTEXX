@@ -5,6 +5,11 @@ local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
+local OldVortexGui = PlayerGui:FindFirstChild("VortexPanel")
+if OldVortexGui then
+	OldVortexGui:Destroy()
+end
+
 --------------------------------------------------
 -- CONFIGURAÇÕES
 --------------------------------------------------
@@ -194,7 +199,7 @@ local Moon = Instance.new("TextLabel")
 Moon.Size = UDim2.new(0, 28, 1, 0)
 Moon.Position = UDim2.new(0, 8, 0, 0)
 Moon.BackgroundTransparency = 1
-Moon.Text = "☾"
+Moon.Text = "👾"
 Moon.TextColor3 = Color3.fromRGB(225, 225, 230)
 Moon.TextSize = 24
 Moon.Font = Enum.Font.Gotham
@@ -223,8 +228,19 @@ Close.Font = Enum.Font.GothamBold
 Close.AutoButtonColor = false
 Close.Parent = Main
 
-Close.Activated:Connect(function()
+local ClosingMenu = false
+
+Close.MouseButton1Click:Connect(function()
+	if ClosingMenu then
+		return
+	end
+
+	ClosingMenu = true
 	Main.Visible = false
+
+	task.delay(0.15, function()
+		ClosingMenu = false
+	end)
 end)
 
 --------------------------------------------------
@@ -243,14 +259,13 @@ local AddressCorner = Instance.new("UICorner")
 AddressCorner.CornerRadius = UDim.new(0, 7)
 AddressCorner.Parent = Address
 
-local SearchIcon = Instance.new("TextLabel")
-SearchIcon.Size = UDim2.new(0, 35, 1, 0)
-SearchIcon.Position = UDim2.new(0, 7, 0, 0)
+local SearchIcon = Instance.new("ImageLabel")
+SearchIcon.Size = UDim2.new(0, 20, 0, 20)
+SearchIcon.Position = UDim2.new(0, 12, 0.5, -10)
 SearchIcon.BackgroundTransparency = 1
-SearchIcon.Text = "⌕"
-SearchIcon.TextColor3 = Color3.fromRGB(71, 142, 190)
-SearchIcon.TextSize = 23
-SearchIcon.Font = Enum.Font.Gotham
+SearchIcon.Image = "rbxassetid://6031154871"
+SearchIcon.ImageColor3 = Color3.fromRGB(71, 142, 190)
+SearchIcon.ScaleType = Enum.ScaleType.Fit
 SearchIcon.Parent = Address
 
 local AddressText = Instance.new("TextLabel")
@@ -281,6 +296,35 @@ Content.Parent = Main
 local ContentCorner = Instance.new("UICorner")
 ContentCorner.CornerRadius = UDim.new(0, 8)
 ContentCorner.Parent = Content
+
+-- Degradê especial usado apenas pelo tema Galaxia
+local GalaxyGradient = Instance.new("UIGradient")
+GalaxyGradient.Name = "GalaxyGradient"
+GalaxyGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 8, 85)),
+	ColorSequenceKeypoint.new(0.25, Color3.fromRGB(125, 25, 210)),
+	ColorSequenceKeypoint.new(0.52, Color3.fromRGB(220, 45, 190)),
+	ColorSequenceKeypoint.new(0.76, Color3.fromRGB(55, 75, 235)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 170, 255))
+})
+GalaxyGradient.Rotation = 18
+GalaxyGradient.Enabled = false
+GalaxyGradient.Parent = Content
+
+local GalaxyMainGradient = GalaxyGradient:Clone()
+GalaxyMainGradient.Name = "GalaxyMainGradient"
+GalaxyMainGradient.Rotation = 25
+GalaxyMainGradient.Parent = Main
+
+local GalaxyTopGradient = GalaxyGradient:Clone()
+GalaxyTopGradient.Name = "GalaxyTopGradient"
+GalaxyTopGradient.Rotation = 0
+GalaxyTopGradient.Parent = Top
+
+local GalaxyAddressGradient = GalaxyGradient:Clone()
+GalaxyAddressGradient.Name = "GalaxyAddressGradient"
+GalaxyAddressGradient.Rotation = 0
+GalaxyAddressGradient.Parent = Address
 
 --------------------------------------------------
 -- STATUS INFERIOR
@@ -423,9 +467,9 @@ end
 
 local function CreateHomeSquareButton(x, imageId, tooltip, callback, useAvatar)
 	local Button = Instance.new("TextButton")
-	Button.Size = UDim2.new(0, 82, 0, 82)
-	Button.Position = UDim2.new(0.5, x, 0, 195)
-	Button.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
+	Button.Size = UDim2.new(0, 68, 0, 68)
+	Button.Position = UDim2.new(0.5, x, 0, 184)
+	Button.BackgroundColor3 = GetTheme().Top
 	Button.BorderSizePixel = 0
 	Button.Text = ""
 	Button.AutoButtonColor = false
@@ -437,8 +481,8 @@ local function CreateHomeSquareButton(x, imageId, tooltip, callback, useAvatar)
 
 	if useAvatar then
 		local Avatar = Instance.new("ImageLabel")
-		Avatar.Size = UDim2.new(0, 48, 0, 48)
-		Avatar.Position = UDim2.new(0.5, -24, 0.5, -24)
+		Avatar.Size = UDim2.new(0, 40, 0, 40)
+		Avatar.Position = UDim2.new(0.5, -20, 0.5, -20)
 		Avatar.BackgroundTransparency = 1
 		Avatar.BorderSizePixel = 0
 		Avatar.ScaleType = Enum.ScaleType.Crop
@@ -463,8 +507,8 @@ local function CreateHomeSquareButton(x, imageId, tooltip, callback, useAvatar)
 		end)
 	else
 		local Icon = Instance.new("ImageLabel")
-		Icon.Size = UDim2.new(0, 34, 0, 34)
-		Icon.Position = UDim2.new(0.5, -17, 0.5, -17)
+		Icon.Size = UDim2.new(0, 28, 0, 28)
+		Icon.Position = UDim2.new(0.5, -14, 0.5, -14)
 		Icon.BackgroundTransparency = 1
 		Icon.Image = imageId
 		Icon.ImageColor3 = Color3.fromRGB(225, 225, 230)
@@ -485,12 +529,14 @@ local function CreateHomeSquareButton(x, imageId, tooltip, callback, useAvatar)
 
 	Button.MouseEnter:Connect(function()
 		Tip.Visible = true
-		Button.BackgroundColor3 = Color3.fromRGB(50, 50, 57)
+
+		local theme = GetTheme()
+		Button.BackgroundColor3 = theme.Accent:Lerp(theme.Top, 0.65)
 	end)
 
 	Button.MouseLeave:Connect(function()
 		Tip.Visible = false
-		Button.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
+		Button.BackgroundColor3 = GetTheme().Top
 	end)
 
 	Button.Activated:Connect(callback)
@@ -504,40 +550,40 @@ end
 --------------------------------------------------
 
 local Themes = {
-	Serika = {
-		Accent = Color3.fromRGB(225, 179, 0),
-		Main = Color3.fromRGB(25, 25, 29),
-		Top = Color3.fromRGB(47, 47, 53),
-		Address = Color3.fromRGB(45, 45, 51),
-		Content = Color3.fromRGB(37, 37, 42),
-	},
-	Rust = {
-		Accent = Color3.fromRGB(224, 88, 28),
-		Main = Color3.fromRGB(28, 27, 29),
-		Top = Color3.fromRGB(49, 47, 48),
-		Address = Color3.fromRGB(47, 44, 45),
-		Content = Color3.fromRGB(39, 37, 38),
-	},
-	Aqua = {
-		Accent = Color3.fromRGB(55, 156, 148),
-		Main = Color3.fromRGB(24, 28, 29),
-		Top = Color3.fromRGB(44, 50, 51),
-		Address = Color3.fromRGB(42, 48, 49),
-		Content = Color3.fromRGB(35, 40, 41),
-	},
-	Legacy = {
-		Accent = Color3.fromRGB(130, 110, 160),
-		Main = Color3.fromRGB(26, 25, 31),
-		Top = Color3.fromRGB(48, 45, 55),
-		Address = Color3.fromRGB(45, 42, 51),
-		Content = Color3.fromRGB(38, 36, 44),
-	},
 	Dark = {
-		Accent = Color3.fromRGB(70, 145, 200),
-		Main = Color3.fromRGB(25, 25, 29),
-		Top = Color3.fromRGB(47, 47, 53),
-		Address = Color3.fromRGB(45, 45, 51),
-		Content = Color3.fromRGB(37, 37, 42),
+		Accent = Color3.fromRGB(105, 85, 255),
+		Main = Color3.fromRGB(10, 10, 14),
+		Top = Color3.fromRGB(22, 22, 29),
+		Address = Color3.fromRGB(27, 27, 36),
+		Content = Color3.fromRGB(16, 16, 22),
+	},
+	AzulInsano = {
+		Accent = Color3.fromRGB(0, 170, 255),
+		Main = Color3.fromRGB(5, 12, 24),
+		Top = Color3.fromRGB(8, 28, 52),
+		Address = Color3.fromRGB(10, 38, 70),
+		Content = Color3.fromRGB(6, 20, 38),
+	},
+	Inferno = {
+		Accent = Color3.fromRGB(255, 35, 35),
+		Main = Color3.fromRGB(22, 7, 7),
+		Top = Color3.fromRGB(48, 12, 12),
+		Address = Color3.fromRGB(68, 16, 16),
+		Content = Color3.fromRGB(32, 9, 9),
+	},
+	Galaxia = {
+		Accent = Color3.fromRGB(170, 90, 255),
+		Main = Color3.fromRGB(16, 10, 30),
+		Top = Color3.fromRGB(34, 20, 58),
+		Address = Color3.fromRGB(45, 26, 72),
+		Content = Color3.fromRGB(23, 14, 40),
+	},
+	Cyberpunk = {
+		Accent = Color3.fromRGB(255, 40, 170),
+		Main = Color3.fromRGB(16, 16, 20),
+		Top = Color3.fromRGB(32, 24, 40),
+		Address = Color3.fromRGB(28, 44, 46),
+		Content = Color3.fromRGB(20, 18, 27),
 	},
 }
 
@@ -566,7 +612,14 @@ local function ApplyTheme(themeName)
 	Top.BackgroundColor3 = theme.Top
 	Address.BackgroundColor3 = theme.Address
 	Content.BackgroundColor3 = theme.Content
-	SearchIcon.TextColor3 = theme.Accent
+	SearchIcon.ImageColor3 = theme.Accent
+
+	-- O tema Galaxia usa um degradê real no fundo da área principal.
+	local galaxyEnabled = themeName == "Galaxia"
+	GalaxyGradient.Enabled = galaxyEnabled
+	GalaxyMainGradient.Enabled = galaxyEnabled
+	GalaxyTopGradient.Enabled = galaxyEnabled
+	GalaxyAddressGradient.Enabled = galaxyEnabled
 
 	Status.Text = '<font color="rgb('
 		.. math.floor(theme.Accent.R * 255) .. ','
@@ -736,7 +789,7 @@ function ShowConfigMenu()
 	ThemeContainerCorner.CornerRadius = UDim.new(0, 8)
 	ThemeContainerCorner.Parent = ThemeContainer
 
-	local themeNames = {"Serika", "Rust", "Aqua", "Legacy", "Dark"}
+	local themeNames = {"Dark", "AzulInsano", "Inferno", "Galaxia", "Cyberpunk"}
 
 	for index, themeName in ipairs(themeNames) do
 		local currentTheme = Themes[themeName]
@@ -910,7 +963,7 @@ function ShowMainMenu()
 	--------------------------------------------------
 
 	local Profile = Instance.new("Frame")
-	Profile.Size = UDim2.new(1, -30, 0, 112)
+	Profile.Size = UDim2.new(1, -30, 0, 92)
 	Profile.Position = UDim2.new(0, 15, 0, 15)
 	Profile.BackgroundColor3 = GetTheme().Top
 	Profile.BorderSizePixel = 0
@@ -921,8 +974,8 @@ function ShowMainMenu()
 	ProfileCorner.Parent = Profile
 
 	local Avatar = Instance.new("ImageLabel")
-	Avatar.Size = UDim2.new(0, 84, 0, 84)
-	Avatar.Position = UDim2.new(0, 16, 0.5, -42)
+	Avatar.Size = UDim2.new(0, 68, 0, 68)
+	Avatar.Position = UDim2.new(0, 16, 0.5, -34)
 	Avatar.BackgroundColor3 = GetTheme().Content
 	Avatar.BorderSizePixel = 0
 	Avatar.Image = ""
@@ -948,7 +1001,7 @@ function ShowMainMenu()
 
 	local Welcome = Instance.new("TextLabel")
 	Welcome.Size = UDim2.new(0, 500, 0, 42)
-	Welcome.Position = UDim2.new(0, 118, 0, 10)
+	Welcome.Position = UDim2.new(0, 100, 0, 7)
 	Welcome.BackgroundTransparency = 1
 	Welcome.RichText = true
 	do
@@ -960,51 +1013,51 @@ function ShowMainMenu()
 			.. ')"><b>' .. Player.DisplayName .. '</b></font>'
 	end
 	Welcome.TextColor3 = GetTheme().Accent
-	Welcome.TextSize = 23
+	Welcome.TextSize = 19
 	Welcome.Font = Enum.Font.Gotham
 	Welcome.TextXAlignment = Enum.TextXAlignment.Left
 	Welcome.Parent = Profile
 
 	local Username = Instance.new("TextLabel")
 	Username.Size = UDim2.new(0, 420, 0, 24)
-	Username.Position = UDim2.new(0, 118, 0, 39)
+	Username.Position = UDim2.new(0, 100, 0, 33)
 	Username.BackgroundTransparency = 1
 	Username.Text = "@" .. Player.Name
 	Username.TextColor3 = GetTheme().Accent
-	Username.TextSize = 18
+	Username.TextSize = 14
 	Username.Font = Enum.Font.Gotham
 	Username.TextXAlignment = Enum.TextXAlignment.Left
 	Username.Parent = Profile
 
 	local Clock = Instance.new("TextLabel")
 	Clock.Size = UDim2.new(0, 160, 0, 26)
-	Clock.Position = UDim2.new(0, 118, 0, 61)
+	Clock.Position = UDim2.new(0, 100, 0, 53)
 	Clock.BackgroundTransparency = 1
 	Clock.Text = os.date("%H:%M")
 	Clock.TextColor3 = Color3.fromRGB(125, 125, 132)
-	Clock.TextSize = 17
+	Clock.TextSize = 14
 	Clock.Font = Enum.Font.Gotham
 	Clock.TextXAlignment = Enum.TextXAlignment.Left
 	Clock.Parent = Profile
 
 	local IdButton = Instance.new("TextButton")
-	IdButton.Size = UDim2.new(0, 42, 0, 42)
-	IdButton.Position = UDim2.new(1, -100, 0.5, -21)
+	IdButton.Size = UDim2.new(0, 36, 0, 36)
+	IdButton.Position = UDim2.new(1, -88, 0.5, -18)
 	IdButton.BackgroundTransparency = 1
 	IdButton.Text = "▣"
 	IdButton.TextColor3 = GetTheme().Accent
-	IdButton.TextSize = 27
+	IdButton.TextSize = 23
 	IdButton.Font = Enum.Font.Gotham
 	IdButton.AutoButtonColor = false
 	IdButton.Parent = Profile
 
 	local GearButton = Instance.new("TextButton")
-	GearButton.Size = UDim2.new(0, 42, 0, 42)
-	GearButton.Position = UDim2.new(1, -54, 0.5, -21)
+	GearButton.Size = UDim2.new(0, 36, 0, 36)
+	GearButton.Position = UDim2.new(1, -48, 0.5, -18)
 	GearButton.BackgroundTransparency = 1
 	GearButton.Text = "⚙"
 	GearButton.TextColor3 = GetTheme().Accent
-	GearButton.TextSize = 27
+	GearButton.TextSize = 23
 	GearButton.Font = Enum.Font.Gotham
 	GearButton.AutoButtonColor = false
 	GearButton.Parent = Profile
@@ -1016,10 +1069,10 @@ function ShowMainMenu()
 
 	local HomeTheme = GetTheme()
 
-	local PlayerButton = CreateHomeSquareButton(-180, "rbxassetid://6034287594", "Jogador", ShowPlayerMenu, false)
-	local VisualButton = CreateHomeSquareButton(-88, "rbxassetid://6031075938", "Visual", ShowVisualMenu, false)
-	local ConfigButton = CreateHomeSquareButton(4, "rbxassetid://6031280882", "Configuração", ShowConfigMenu, false)
-	local ProfileButton = CreateHomeSquareButton(96, "", "Perfil", function()
+	local PlayerButton = CreateHomeSquareButton(-147, "rbxassetid://6034287594", "Jogador", ShowPlayerMenu, false)
+	local VisualButton = CreateHomeSquareButton(-73, "rbxassetid://6031075938", "Visual", ShowVisualMenu, false)
+	local ConfigButton = CreateHomeSquareButton(1, "rbxassetid://6031280882", "Configuração", ShowConfigMenu, false)
+	local ProfileButton = CreateHomeSquareButton(75, "", "Perfil", function()
 		Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Perfil</font>'
 	end, true)
 
