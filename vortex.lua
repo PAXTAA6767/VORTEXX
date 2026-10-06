@@ -239,6 +239,36 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
+
+-- Reforço local do God Mode para testes.
+-- Mantém vida/MaxHealth restaurados a cada frame e tenta impedir estados de morte.
+RunService.Heartbeat:Connect(function()
+	if not Settings.GodMode then
+		return
+	end
+
+	local character = Player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid or not humanoid.Parent then
+		return
+	end
+
+	if humanoid.MaxHealth < GOD_MODE_HEALTH then
+		humanoid.MaxHealth = GOD_MODE_HEALTH
+	end
+
+	if humanoid.Health < GOD_MODE_HEALTH then
+		humanoid.Health = GOD_MODE_HEALTH
+	end
+
+	if humanoid:GetState() == Enum.HumanoidStateType.Dead then
+		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+	end
+
+	humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+end)
+
+
 Player.CharacterAdded:Connect(function()
 	disconnectGodModeConnections()
 	GodModeHumanoid = nil
@@ -1182,6 +1212,13 @@ function ShowVisualMenu()
 	BottomSpace.Parent = VisualScroll
 end
 
+function ShowOthersMenu()
+	ClearContent()
+	AddressText.Text = "Vortex / Outros"
+	CreateBackButton(ShowMainMenu)
+	CreateMenuTitle("Outros")
+end
+
 function ShowConfigMenu()
 	ClearContent()
 	AddressText.Text = "Vortex/configuração"
@@ -1209,10 +1246,10 @@ function ShowConfigMenu()
 
 	for index, themeName in ipairs(themeNames) do
 		local currentTheme = Themes[themeName]
-		local x = 10 + (index - 1) * 124
+		local x = 8 + (index - 1) * 113
 
 		local Card = Instance.new("TextButton")
-		Card.Size = UDim2.new(0, 112, 0, 96)
+		Card.Size = UDim2.new(0, 103, 0, 96)
 		Card.Position = UDim2.new(0, x, 0, 8)
 		Card.BackgroundColor3 = Color3.fromRGB(29, 29, 33)
 		Card.BorderSizePixel = 0
@@ -1243,7 +1280,7 @@ function ShowConfigMenu()
 		PreviewCorner.Parent = Preview
 
 		local AccentLine = Instance.new("Frame")
-		AccentLine.Size = UDim2.new(0, 70, 0, 9)
+		AccentLine.Size = UDim2.new(0, 62, 0, 9)
 		AccentLine.Position = UDim2.new(0, 8, 0, 8)
 		AccentLine.BackgroundColor3 = currentTheme.Accent
 		AccentLine.BorderSizePixel = 0
@@ -1254,7 +1291,7 @@ function ShowConfigMenu()
 		AccentCorner.Parent = AccentLine
 
 		local WhiteLine = Instance.new("Frame")
-		WhiteLine.Size = UDim2.new(0, 56, 0, 8)
+		WhiteLine.Size = UDim2.new(0, 50, 0, 8)
 		WhiteLine.Position = UDim2.new(0, 8, 0, 25)
 		WhiteLine.BackgroundColor3 = Color3.fromRGB(235, 235, 238)
 		WhiteLine.BorderSizePixel = 0
@@ -1265,7 +1302,7 @@ function ShowConfigMenu()
 		WhiteCorner.Parent = WhiteLine
 
 		local GrayLine = Instance.new("Frame")
-		GrayLine.Size = UDim2.new(0, 46, 0, 8)
+		GrayLine.Size = UDim2.new(0, 41, 0, 8)
 		GrayLine.Position = UDim2.new(0, 8, 0, 42)
 		GrayLine.BackgroundColor3 = Color3.fromRGB(170, 170, 175)
 		GrayLine.BorderSizePixel = 0
@@ -1713,7 +1750,33 @@ function ShowMainMenu()
 
 	local PlayerButton = CreateHomeSquareButton(-147, "rbxassetid://6034287594", "Jogador", ShowPlayerMenu, false)
 	local VisualButton = CreateHomeSquareButton(-73, "rbxassetid://6031075938", "Visual", ShowVisualMenu, false)
-	local ConfigButton = CreateHomeSquareButton(1, "rbxassetid://6031280882", "Configuração", ShowConfigMenu, false)
+	local ConfigButton = CreateHomeSquareButton(1, "", "Outros", ShowOthersMenu, false)
+
+	-- Losango pequeno e vazado; não altera o botão Perfil.
+	local OutrosIcon = ConfigButton:FindFirstChildOfClass("ImageLabel")
+	if OutrosIcon then
+		OutrosIcon.Visible = false
+	end
+
+	local Diamond = Instance.new("Frame")
+	Diamond.Name = "OutrosDiamond"
+	Diamond.AnchorPoint = Vector2.new(0.5, 0.5)
+	Diamond.Size = UDim2.fromOffset(15, 15)
+	Diamond.Position = UDim2.fromScale(0.5, 0.5)
+	Diamond.BackgroundTransparency = 1
+	Diamond.BorderSizePixel = 0
+	Diamond.Rotation = 45
+	Diamond.Parent = ConfigButton
+
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Thickness = 2
+	Stroke.Color = GetTheme().Accent
+	Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	Stroke.Parent = Diamond
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 2)
+	Corner.Parent = Diamond
 	local ProfileButton = CreateHomeSquareButton(75, "", "Perfil", ShowProfileMenu, true)
 
 	for _, button in ipairs({PlayerButton, VisualButton, ConfigButton, ProfileButton}) do
