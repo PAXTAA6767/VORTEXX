@@ -635,7 +635,7 @@ local function updateESP(plr)
             label.BackgroundTransparency = 1
             label.TextColor3 = getTeamColor(plr)
             label.TextStrokeTransparency = 0
-            label.TextSize = 14
+            label.TextSize = 12
             label.Font = Enum.Font.GothamBold
             label.Parent = billboard
             data.Label = label
@@ -665,6 +665,12 @@ local function updateESP(plr)
     end
 
     -- Tracer visual simples para o seu próprio jogo
+    -- Linha um pouco mais grossa e com um tom mais escuro da equipe.
+    local _, tracerColor = getRoleAndColor(plr)
+    if tracerColor then
+        tracerColor = tracerColor:Lerp(Color3.new(0, 0, 0), 0.28)
+    end
+
     if Settings.EnableTracers then
         if not data.Tracer then
             local attachment = Instance.new("Attachment")
@@ -687,10 +693,9 @@ local function updateESP(plr)
                 beam.Attachment0 = fromAttachment
                 beam.Attachment1 = attachment
                 beam.FaceCamera = true
-                beam.Width0 = 0.06
-                beam.Width1 = 0.06
-                local teamColor = getTeamColor(plr)
-                beam.Color = ColorSequence.new(teamColor)
+                beam.Width0 = 0.085
+                beam.Width1 = 0.085
+                beam.Color = ColorSequence.new(tracerColor or teamColor)
                 beam.Transparency = NumberSequence.new(0.15)
                 beam.LightEmission = 1
                 beam.Parent = localRoot
@@ -708,7 +713,7 @@ local function updateESP(plr)
     end
 
     if data.Tracer then
-        data.Tracer.Color = ColorSequence.new(teamColor)
+        data.Tracer.Color = ColorSequence.new(tracerColor or teamColor)
     end
 end
 
