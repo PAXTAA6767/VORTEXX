@@ -28,418 +28,527 @@ local refreshAllESP
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "VortexPanel"
 Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = false
 Gui.Parent = PlayerGui
 
 --------------------------------------------------
--- JANELA PRINCIPAL
+-- JANELA PRINCIPAL - VISUAL ESTILO MERCURY/CHAOS
 --------------------------------------------------
 
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 760, 0, 500)
-Main.Position = UDim2.new(0.5, -380, 0.5, -250)
-Main.BackgroundColor3 = Color3.fromRGB(35, 35, 39)
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 890, 0, 590)
+Main.Position = UDim2.new(0.5, -445, 0.5, -295)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 29)
 Main.BorderSizePixel = 0
 Main.Visible = false
 Main.Parent = Gui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.CornerRadius = UDim.new(0, 7)
 MainCorner.Parent = Main
 
 --------------------------------------------------
--- TOPO
+-- ABA SUPERIOR
 --------------------------------------------------
 
 local Top = Instance.new("Frame")
-Top.Size = UDim2.new(1, 0, 0, 45)
-Top.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
+Top.Name = "Top"
+Top.Size = UDim2.new(0, 188, 0, 38)
+Top.Position = UDim2.new(0, 5, 0, 4)
+Top.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 Top.BorderSizePixel = 0
 Top.Parent = Main
 
 local TopCorner = Instance.new("UICorner")
-TopCorner.CornerRadius = UDim.new(0, 10)
+TopCorner.CornerRadius = UDim.new(0, 7)
 TopCorner.Parent = Top
 
+local Moon = Instance.new("TextLabel")
+Moon.Size = UDim2.new(0, 28, 1, 0)
+Moon.Position = UDim2.new(0, 8, 0, 0)
+Moon.BackgroundTransparency = 1
+Moon.Text = "☾"
+Moon.TextColor3 = Color3.fromRGB(225, 225, 230)
+Moon.TextSize = 24
+Moon.Font = Enum.Font.Gotham
+Moon.Parent = Top
+
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -60, 1, 0)
-Title.Position = UDim2.new(0, 18, 0, 0)
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 38, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "☾  Vortex"
-Title.TextColor3 = Color3.fromRGB(225,225,225)
-Title.TextSize = 15
+Title.Text = "Vortex"
+Title.TextColor3 = Color3.fromRGB(220, 220, 225)
+Title.TextSize = 16
 Title.Font = Enum.Font.Gotham
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Top
 
 local Close = Instance.new("TextButton")
-Close.Size = UDim2.new(0, 40, 0, 40)
-Close.Position = UDim2.new(1, -48, 0, 2)
+Close.Name = "Close"
+Close.Size = UDim2.new(0, 38, 0, 38)
+Close.Position = UDim2.new(1, -43, 0, 4)
 Close.BackgroundTransparency = 1
 Close.Text = "×"
-Close.TextColor3 = Color3.fromRGB(220,220,220)
-Close.TextSize = 25
-Close.Font = Enum.Font.Gotham
-Close.Parent = Top
+Close.TextColor3 = Color3.fromRGB(220, 220, 225)
+Close.TextSize = 26
+Close.Font = Enum.Font.GothamBold
+Close.AutoButtonColor = false
+Close.Parent = Main
 
 Close.Activated:Connect(function()
 	Main.Visible = false
 end)
 
 --------------------------------------------------
--- BARRA
+-- BARRA DE ENDEREÇO
 --------------------------------------------------
 
-local Address = Instance.new("TextLabel")
-Address.Size = UDim2.new(1, -30, 0, 34)
-Address.Position = UDim2.new(0, 15, 0, 55)
-Address.BackgroundColor3 = Color3.fromRGB(45,45,50)
+local Address = Instance.new("Frame")
+Address.Name = "Address"
+Address.Size = UDim2.new(1, -12, 0, 40)
+Address.Position = UDim2.new(0, 6, 0, 49)
+Address.BackgroundColor3 = Color3.fromRGB(45, 45, 51)
 Address.BorderSizePixel = 0
-Address.Text = "  🔍   Test Environment"
-Address.TextColor3 = Color3.fromRGB(145,145,150)
-Address.TextSize = 14
-Address.Font = Enum.Font.Gotham
-Address.TextXAlignment = Enum.TextXAlignment.Left
 Address.Parent = Main
 
 local AddressCorner = Instance.new("UICorner")
-AddressCorner.CornerRadius = UDim.new(0,7)
+AddressCorner.CornerRadius = UDim.new(0, 7)
 AddressCorner.Parent = Address
 
+local SearchIcon = Instance.new("TextLabel")
+SearchIcon.Size = UDim2.new(0, 35, 1, 0)
+SearchIcon.Position = UDim2.new(0, 7, 0, 0)
+SearchIcon.BackgroundTransparency = 1
+SearchIcon.Text = "⌕"
+SearchIcon.TextColor3 = Color3.fromRGB(71, 142, 190)
+SearchIcon.TextSize = 23
+SearchIcon.Font = Enum.Font.Gotham
+SearchIcon.Parent = Address
+
+local AddressText = Instance.new("TextLabel")
+AddressText.Size = UDim2.new(1, -48, 1, 0)
+AddressText.Position = UDim2.new(0, 42, 0, 0)
+AddressText.BackgroundTransparency = 1
+AddressText.Text = "https://github.com/PAXTAA6767/VORTEXX/home"
+AddressText.TextColor3 = Color3.fromRGB(145, 145, 150)
+AddressText.TextSize = 16
+AddressText.Font = Enum.Font.Gotham
+AddressText.TextXAlignment = Enum.TextXAlignment.Left
+AddressText.TextTruncate = Enum.TextTruncate.AtEnd
+AddressText.Parent = Address
+
 --------------------------------------------------
--- CONTAINER
+-- ÁREA PRINCIPAL
 --------------------------------------------------
 
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -30, 1, -105)
-Content.Position = UDim2.new(0,15,0,100)
-Content.BackgroundColor3 = Color3.fromRGB(39,39,44)
+Content.Name = "Content"
+Content.Size = UDim2.new(1, -12, 1, -120)
+Content.Position = UDim2.new(0, 6, 0, 96)
+Content.BackgroundColor3 = Color3.fromRGB(37, 37, 42)
 Content.BorderSizePixel = 0
+Content.ClipsDescendants = true
 Content.Parent = Main
 
 local ContentCorner = Instance.new("UICorner")
-ContentCorner.CornerRadius = UDim.new(0,10)
+ContentCorner.CornerRadius = UDim.new(0, 8)
 ContentCorner.Parent = Content
 
 --------------------------------------------------
--- FUNÇÃO PARA LIMPAR CONTEÚDO
+-- STATUS INFERIOR
+--------------------------------------------------
+
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, -12, 0, 18)
+Status.Position = UDim2.new(0, 6, 1, -20)
+Status.BackgroundTransparency = 1
+Status.RichText = true
+Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Idle</font>'
+Status.TextSize = 14
+Status.Font = Enum.Font.Gotham
+Status.TextXAlignment = Enum.TextXAlignment.Left
+Status.TextColor3 = Color3.fromRGB(120, 120, 125)
+Status.Parent = Main
+
+--------------------------------------------------
+-- HELPERS
 --------------------------------------------------
 
 local function ClearContent()
 	for _, object in ipairs(Content:GetChildren()) do
-		object:Destroy()
+		if not object:IsA("UICorner") then
+			object:Destroy()
+		end
 	end
 end
 
---------------------------------------------------
--- BOTÃO DE OPÇÃO
---------------------------------------------------
+local function CreateBackButton(callback)
+	local Back = Instance.new("TextButton")
+	Back.Size = UDim2.new(0, 112, 0, 38)
+	Back.Position = UDim2.new(0, 16, 0, 16)
+	Back.BackgroundColor3 = Color3.fromRGB(48, 48, 54)
+	Back.BorderSizePixel = 0
+	Back.Text = "←  Voltar"
+	Back.TextColor3 = Color3.fromRGB(220, 220, 225)
+	Back.TextSize = 14
+	Back.Font = Enum.Font.Gotham
+	Back.AutoButtonColor = false
+	Back.Parent = Content
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 7)
+	Corner.Parent = Back
+
+	Back.Activated:Connect(callback)
+	return Back
+end
 
 local function CreateOption(parent, text, y, value, callback)
-
 	local Button = Instance.new("TextButton")
-	Button.Size = UDim2.new(1, -30, 0, 55)
-	Button.Position = UDim2.new(0,15,0,y)
-	Button.BackgroundColor3 = Color3.fromRGB(48,48,53)
+	Button.Size = UDim2.new(1, -32, 0, 54)
+	Button.Position = UDim2.new(0, 16, 0, y)
+	Button.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	Button.BorderSizePixel = 0
 	Button.Text = ""
 	Button.AutoButtonColor = false
 	Button.Parent = parent
 
 	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0,8)
+	Corner.CornerRadius = UDim.new(0, 7)
 	Corner.Parent = Button
 
-	--------------------------------------------------
-	-- TEXTO
-	--------------------------------------------------
-
 	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(1,-75,1,0)
-	Label.Position = UDim2.new(0,15,0,0)
+	Label.Size = UDim2.new(1, -78, 1, 0)
+	Label.Position = UDim2.new(0, 16, 0, 0)
 	Label.BackgroundTransparency = 1
 	Label.Text = text
-	Label.TextColor3 = Color3.fromRGB(225,225,225)
-	Label.TextSize = 19
+	Label.TextColor3 = Color3.fromRGB(220, 220, 225)
+	Label.TextSize = 17
 	Label.Font = Enum.Font.Gotham
 	Label.TextXAlignment = Enum.TextXAlignment.Left
 	Label.Parent = Button
 
-	--------------------------------------------------
-	-- CHECKBOX
-	--------------------------------------------------
-
 	local Check = Instance.new("Frame")
-	Check.Size = UDim2.new(0,24,0,24)
-	Check.Position = UDim2.new(1,-45,0.5,-12)
-	Check.BackgroundColor3 = Color3.fromRGB(42,42,46)
-	Check.BorderSizePixel = 2
-	Check.BorderColor3 = Color3.fromRGB(135,135,140)
+	Check.Size = UDim2.new(0, 24, 0, 24)
+	Check.Position = UDim2.new(1, -42, 0.5, -12)
+	Check.BackgroundColor3 = Color3.fromRGB(39, 39, 44)
+	Check.BorderSizePixel = 1
+	Check.BorderColor3 = Color3.fromRGB(115, 115, 122)
 	Check.Parent = Button
 
 	local CheckCorner = Instance.new("UICorner")
-	CheckCorner.CornerRadius = UDim.new(0,3)
+	CheckCorner.CornerRadius = UDim.new(0, 4)
 	CheckCorner.Parent = Check
 
 	local Mark = Instance.new("TextLabel")
-	Mark.Size = UDim2.fromScale(1,1)
+	Mark.Size = UDim2.fromScale(1, 1)
 	Mark.BackgroundTransparency = 1
 	Mark.Text = "✓"
-	Mark.TextColor3 = Color3.new(1,1,1)
-	Mark.TextSize = 17
+	Mark.TextColor3 = Color3.fromRGB(240, 240, 245)
+	Mark.TextSize = 16
 	Mark.Font = Enum.Font.GothamBold
-	Mark.Visible = false
 	Mark.Parent = Check
 
 	local Enabled = value
 
-	local function Update()
-
+	local function Update(fireCallback)
 		if Enabled then
-			Check.BackgroundColor3 = Color3.fromRGB(65,135,195)
-			Check.BorderColor3 = Color3.fromRGB(85,155,215)
+			Check.BackgroundColor3 = Color3.fromRGB(67, 137, 195)
+			Check.BorderColor3 = Color3.fromRGB(82, 155, 215)
 			Mark.Visible = true
 		else
-			Check.BackgroundColor3 = Color3.fromRGB(42,42,46)
-			Check.BorderColor3 = Color3.fromRGB(135,135,140)
+			Check.BackgroundColor3 = Color3.fromRGB(39, 39, 44)
+			Check.BorderColor3 = Color3.fromRGB(115, 115, 122)
 			Mark.Visible = false
 		end
 
-		callback(Enabled)
+		if fireCallback then
+			callback(Enabled)
+		end
 	end
 
 	Button.Activated:Connect(function()
 		Enabled = not Enabled
-		Update()
+		Update(true)
 
-		-- Atualiza/remover os elementos do ESP imediatamente.
 		if refreshAllESP then
 			task.defer(refreshAllESP)
 		end
 	end)
 
-	Update()
+	Update(false)
+	return Button
 end
 
---------------------------------------------------
--- BOTÃO VOLTAR
---------------------------------------------------
+local function CreateMenuTitle(titleText)
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(1, -160, 0, 42)
+	Label.Position = UDim2.new(0, 145, 0, 14)
+	Label.BackgroundTransparency = 1
+	Label.Text = titleText
+	Label.TextColor3 = Color3.fromRGB(90, 160, 215)
+	Label.TextSize = 21
+	Label.Font = Enum.Font.GothamBold
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = Content
+end
 
-local function CreateBackButton(callback)
-
-	local Back = Instance.new("TextButton")
-	Back.Size = UDim2.new(0,110,0,40)
-	Back.Position = UDim2.new(0,15,0,15)
-	Back.BackgroundColor3 = Color3.fromRGB(48,48,53)
-	Back.BorderSizePixel = 0
-	Back.Text = "←  Voltar"
-	Back.TextColor3 = Color3.fromRGB(220,220,220)
-	Back.TextSize = 15
-	Back.Font = Enum.Font.Gotham
-	Back.Parent = Content
+local function CreateHomeIconButton(x, iconText, tooltip, callback)
+	local Button = Instance.new("TextButton")
+	Button.Size = UDim2.new(0, 82, 0, 82)
+	Button.Position = UDim2.new(0.5, x, 0, 270)
+	Button.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
+	Button.BorderSizePixel = 0
+	Button.Text = iconText
+	Button.TextColor3 = Color3.fromRGB(225, 225, 230)
+	Button.TextSize = 29
+	Button.Font = Enum.Font.GothamBold
+	Button.AutoButtonColor = false
+	Button.Parent = Content
 
 	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0,7)
-	Corner.Parent = Back
+	Corner.CornerRadius = UDim.new(0, 7)
+	Corner.Parent = Button
 
-	Back.Activated:Connect(callback)
+	local Tip = Instance.new("TextLabel")
+	Tip.Size = UDim2.new(0, 120, 0, 24)
+	Tip.Position = UDim2.new(0.5, -60, 1, 5)
+	Tip.BackgroundTransparency = 1
+	Tip.Text = tooltip
+	Tip.TextColor3 = Color3.fromRGB(145, 145, 152)
+	Tip.TextSize = 12
+	Tip.Font = Enum.Font.Gotham
+	Tip.Visible = false
+	Tip.Parent = Button
+
+	Button.MouseEnter:Connect(function()
+		Tip.Visible = true
+		Button.BackgroundColor3 = Color3.fromRGB(49, 49, 56)
+	end)
+
+	Button.MouseLeave:Connect(function()
+		Tip.Visible = false
+		Button.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
+	end)
+
+	Button.Activated:Connect(callback)
+	return Button
 end
 
 --------------------------------------------------
--- MENU PRINCIPAL
---------------------------------------------------
-
-local function ShowMainMenu()
-
-	ClearContent()
-
-	Address.Text = "  🔍   Test Environment"
-
-	local Info = Instance.new("TextLabel")
-	Info.Size = UDim2.new(1,-30,0,40)
-	Info.Position = UDim2.new(0,15,0,15)
-	Info.BackgroundTransparency = 1
-	Info.Text = "Selecione uma categoria"
-	Info.TextColor3 = Color3.fromRGB(170,170,175)
-	Info.TextSize = 18
-	Info.Font = Enum.Font.Gotham
-	Info.TextXAlignment = Enum.TextXAlignment.Left
-	Info.Parent = Content
-
-	--------------------------------------------------
-	-- JOGADOR
-	--------------------------------------------------
-
-	local PlayerButton = Instance.new("TextButton")
-	PlayerButton.Size = UDim2.new(1,-30,0,80)
-	PlayerButton.Position = UDim2.new(0,15,0,70)
-	PlayerButton.BackgroundColor3 = Color3.fromRGB(48,48,53)
-	PlayerButton.BorderSizePixel = 0
-	PlayerButton.Text = "👤   Jogador"
-	PlayerButton.TextColor3 = Color3.fromRGB(225,225,225)
-	PlayerButton.TextSize = 20
-	PlayerButton.Font = Enum.Font.Gotham
-	PlayerButton.TextXAlignment = Enum.TextXAlignment.Left
-	PlayerButton.Parent = Content
-
-	local P = Instance.new("UICorner")
-	P.CornerRadius = UDim.new(0,8)
-	P.Parent = PlayerButton
-
-	PlayerButton.Activated:Connect(function()
-		ShowPlayerMenu()
-	end)
-
-	--------------------------------------------------
-	-- VISUAL
-	--------------------------------------------------
-
-	local VisualButton = PlayerButton:Clone()
-	VisualButton.Position = UDim2.new(0,15,0,165)
-	VisualButton.Text = "👁   Visual"
-	VisualButton.Parent = Content
-
-	VisualButton.Activated:Connect(function()
-		ShowVisualMenu()
-	end)
-
-	--------------------------------------------------
-	-- CONFIGURAÇÃO
-	--------------------------------------------------
-
-	local ConfigButton = PlayerButton:Clone()
-	ConfigButton.Position = UDim2.new(0,15,0,260)
-	ConfigButton.Text = "⚙   Configuração"
-	ConfigButton.Parent = Content
-
-	ConfigButton.Activated:Connect(function()
-		ShowConfigMenu()
-	end)
-end
-
---------------------------------------------------
--- MENU JOGADOR
+-- TELAS
 --------------------------------------------------
 
 function ShowPlayerMenu()
-
 	ClearContent()
-
-	Address.Text = "  🔍   Test Environment / Player"
-
+	AddressText.Text = "Vortex / Player"
 	CreateBackButton(ShowMainMenu)
-
-end
-
---------------------------------------------------
--- MENU VISUAL
---------------------------------------------------
-
-function ShowVisualMenu()
-
-	ClearContent()
-
-	Address.Text = "  🔍   Test Environment / Visuals"
-
-	CreateBackButton(ShowMainMenu)
-
-	CreateOption(
-		Content,
-		"Enable ESP",
-		70,
-		Settings.EnableESP,
-		function(value)
-			Settings.EnableESP = value
-			if refreshAllESP then task.defer(refreshAllESP) end
-		end
-	)
-
-	CreateOption(
-		Content,
-		"Enable Boxes",
-		135,
-		Settings.EnableBoxes,
-		function(value)
-			Settings.EnableBoxes = value
-			if refreshAllESP then task.defer(refreshAllESP) end
-		end
-	)
-
-	CreateOption(
-		Content,
-		"Enable Names",
-		200,
-		Settings.EnableNames,
-		function(value)
-			Settings.EnableNames = value
-			if refreshAllESP then task.defer(refreshAllESP) end
-		end
-	)
-
-	CreateOption(
-		Content,
-		"Enable Distance",
-		265,
-		Settings.EnableDistance,
-		function(value)
-			Settings.EnableDistance = value
-			if refreshAllESP then task.defer(refreshAllESP) end
-		end
-	)
-
-	CreateOption(
-		Content,
-		"Enable Tracers",
-		330,
-		Settings.EnableTracers,
-		function(value)
-			Settings.EnableTracers = value
-			if refreshAllESP then task.defer(refreshAllESP) end
-		end
-	)
-end
-
---------------------------------------------------
--- MENU CONFIGURAÇÃO
---------------------------------------------------
-
-function ShowConfigMenu()
-
-	ClearContent()
-
-	Address.Text = "  🔍   Test Environment / Settings"
-
-	CreateBackButton(ShowMainMenu)
+	CreateMenuTitle("Jogador")
 
 	local Info = Instance.new("TextLabel")
-	Info.Size = UDim2.new(1,-30,0,70)
-	Info.Position = UDim2.new(0,15,0,75)
-	Info.BackgroundColor3 = Color3.fromRGB(48,48,53)
+	Info.Size = UDim2.new(1, -32, 0, 80)
+	Info.Position = UDim2.new(0, 16, 0, 82)
+	Info.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	Info.BorderSizePixel = 0
-	Info.Text = "Team Colors: automático\nAs cores são definidas pela equipe de cada jogador."
-	Info.TextColor3 = Color3.fromRGB(220,220,225)
+	Info.Text = "Nenhuma opção de jogador adicionada."
+	Info.TextColor3 = Color3.fromRGB(160, 160, 168)
 	Info.TextSize = 15
+	Info.Font = Enum.Font.Gotham
+	Info.Parent = Content
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 7)
+	Corner.Parent = Info
+end
+
+function ShowVisualMenu()
+	ClearContent()
+	AddressText.Text = "Vortex / Visuals"
+	CreateBackButton(ShowMainMenu)
+	CreateMenuTitle("Visual")
+
+	CreateOption(Content, "Enable ESP", 70, Settings.EnableESP, function(value)
+		Settings.EnableESP = value
+		if refreshAllESP then task.defer(refreshAllESP) end
+	end)
+
+	CreateOption(Content, "Enable Boxes", 132, Settings.EnableBoxes, function(value)
+		Settings.EnableBoxes = value
+		if refreshAllESP then task.defer(refreshAllESP) end
+	end)
+
+	CreateOption(Content, "Enable Names", 194, Settings.EnableNames, function(value)
+		Settings.EnableNames = value
+		if refreshAllESP then task.defer(refreshAllESP) end
+	end)
+
+	CreateOption(Content, "Enable Distance", 256, Settings.EnableDistance, function(value)
+		Settings.EnableDistance = value
+		if refreshAllESP then task.defer(refreshAllESP) end
+	end)
+
+	CreateOption(Content, "Enable Tracers", 318, Settings.EnableTracers, function(value)
+		Settings.EnableTracers = value
+		if refreshAllESP then task.defer(refreshAllESP) end
+	end)
+end
+
+function ShowConfigMenu()
+	ClearContent()
+	AddressText.Text = "Vortex / Settings"
+	CreateBackButton(ShowMainMenu)
+	CreateMenuTitle("Configuração")
+
+	local Info = Instance.new("TextLabel")
+	Info.Size = UDim2.new(1, -32, 0, 86)
+	Info.Position = UDim2.new(0, 16, 0, 82)
+	Info.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	Info.BorderSizePixel = 0
+	Info.Text = "Team Colors: automático\nLaranja = Prisioneiro   •   Azul = Polícia   •   Vermelho = Ladrão"
+	Info.TextColor3 = Color3.fromRGB(210, 210, 215)
+	Info.TextSize = 14
 	Info.Font = Enum.Font.Gotham
 	Info.TextWrapped = true
 	Info.Parent = Content
 
 	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0,8)
+	Corner.CornerRadius = UDim.new(0, 7)
 	Corner.Parent = Info
 end
 
+function ShowMainMenu()
+	ClearContent()
+	AddressText.Text = "https://github.com/PAXTAA6767/VORTEXX/home"
+
+	--------------------------------------------------
+	-- CARTÃO DE PERFIL
+	--------------------------------------------------
+
+	local Profile = Instance.new("Frame")
+	Profile.Size = UDim2.new(1, -30, 0, 150)
+	Profile.Position = UDim2.new(0, 15, 0, 15)
+	Profile.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+	Profile.BorderSizePixel = 0
+	Profile.Parent = Content
+
+	local ProfileCorner = Instance.new("UICorner")
+	ProfileCorner.CornerRadius = UDim.new(0, 9)
+	ProfileCorner.Parent = Profile
+
+	local Avatar = Instance.new("ImageLabel")
+	Avatar.Size = UDim2.new(0, 118, 0, 118)
+	Avatar.Position = UDim2.new(0, 16, 0.5, -59)
+	Avatar.BackgroundColor3 = Color3.fromRGB(55, 55, 61)
+	Avatar.BorderSizePixel = 0
+	Avatar.Image = ""
+	Avatar.ScaleType = Enum.ScaleType.Crop
+	Avatar.Parent = Profile
+
+	local AvatarCorner = Instance.new("UICorner")
+	AvatarCorner.CornerRadius = UDim.new(1, 0)
+	AvatarCorner.Parent = Avatar
+
+	task.spawn(function()
+		local ok, image = pcall(function()
+			return Players:GetUserThumbnailAsync(
+				Player.UserId,
+				Enum.ThumbnailType.HeadShot,
+				Enum.ThumbnailSize.Size150x150
+			)
+		end)
+		if ok and Avatar.Parent then
+			Avatar.Image = image
+		end
+	end)
+
+	local Welcome = Instance.new("TextLabel")
+	Welcome.Size = UDim2.new(0, 470, 0, 48)
+	Welcome.Position = UDim2.new(0, 156, 0, 20)
+	Welcome.BackgroundTransparency = 1
+	Welcome.RichText = true
+	Welcome.Text = 'Welcome,  <font color="rgb(105,170,225)"><b>' .. Player.DisplayName .. '</b></font>'
+	Welcome.TextColor3 = Color3.fromRGB(91, 159, 215)
+	Welcome.TextSize = 30
+	Welcome.Font = Enum.Font.Gotham
+	Welcome.TextXAlignment = Enum.TextXAlignment.Left
+	Welcome.Parent = Profile
+
+	local Username = Instance.new("TextLabel")
+	Username.Size = UDim2.new(0, 420, 0, 28)
+	Username.Position = UDim2.new(0, 156, 0, 67)
+	Username.BackgroundTransparency = 1
+	Username.Text = "@" .. Player.Name
+	Username.TextColor3 = Color3.fromRGB(72, 146, 204)
+	Username.TextSize = 18
+	Username.Font = Enum.Font.Gotham
+	Username.TextXAlignment = Enum.TextXAlignment.Left
+	Username.Parent = Profile
+
+	local Clock = Instance.new("TextLabel")
+	Clock.Size = UDim2.new(0, 160, 0, 26)
+	Clock.Position = UDim2.new(0, 156, 0, 100)
+	Clock.BackgroundTransparency = 1
+	Clock.Text = os.date("%H:%M")
+	Clock.TextColor3 = Color3.fromRGB(125, 125, 132)
+	Clock.TextSize = 17
+	Clock.Font = Enum.Font.Gotham
+	Clock.TextXAlignment = Enum.TextXAlignment.Left
+	Clock.Parent = Profile
+
+	local IdButton = Instance.new("TextButton")
+	IdButton.Size = UDim2.new(0, 42, 0, 42)
+	IdButton.Position = UDim2.new(1, -100, 0.5, -21)
+	IdButton.BackgroundTransparency = 1
+	IdButton.Text = "▣"
+	IdButton.TextColor3 = Color3.fromRGB(150, 150, 157)
+	IdButton.TextSize = 27
+	IdButton.Font = Enum.Font.Gotham
+	IdButton.AutoButtonColor = false
+	IdButton.Parent = Profile
+
+	local GearButton = Instance.new("TextButton")
+	GearButton.Size = UDim2.new(0, 42, 0, 42)
+	GearButton.Position = UDim2.new(1, -54, 0.5, -21)
+	GearButton.BackgroundTransparency = 1
+	GearButton.Text = "⚙"
+	GearButton.TextColor3 = Color3.fromRGB(150, 150, 157)
+	GearButton.TextSize = 27
+	GearButton.Font = Enum.Font.Gotham
+	GearButton.AutoButtonColor = false
+	GearButton.Parent = Profile
+	GearButton.Activated:Connect(ShowConfigMenu)
+
+	--------------------------------------------------
+	-- QUATRO BOTÕES CENTRAIS
+	--------------------------------------------------
+
+	CreateHomeIconButton(-185, "♙", "Jogador", ShowPlayerMenu)
+	CreateHomeIconButton(-88, "◉", "Visual", ShowVisualMenu)
+	CreateHomeIconButton(9, "◇", "Configuração", ShowConfigMenu)
+	CreateHomeIconButton(106, "V", "Vortex", function()
+		Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Vortex Ready</font>'
+	end)
+end
+
 --------------------------------------------------
--- ABRIR MENU PRINCIPAL COM K
+-- ABRIR/FECHAR COM K
 --------------------------------------------------
 
 UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if input.KeyCode == Enum.KeyCode.K then
-        Main.Visible = not Main.Visible
-        if Main.Visible then
-            ShowMainMenu()
-        end
-    end
+	if processed then return end
+
+	if input.KeyCode == Enum.KeyCode.K then
+		Main.Visible = not Main.Visible
+
+		if Main.Visible then
+			ShowMainMenu()
+			Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Idle</font>'
+		end
+	end
 end)
+
 
 --------------------------------------------------
 -- VORTEX ESP - PARA O SEU PRÓPRIO JOGO
