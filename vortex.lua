@@ -18,7 +18,7 @@ local Settings = {
 	-- Jogador
 	WalkSpeedBoost = 0,
 	NoWait = false,
-	NoClip = false,
+	FollowPlayer = false,
 	Aimbot = false,
 	AimbotDistance = 100,
 	GuidedAim = false,
@@ -47,187 +47,56 @@ local getRoleAndColor
 -- WALK SPEED - JOGADOR
 -- 0 = NORMAL | 1-200 = ACRÉSCIMO SOBRE A VELOCIDADE BASE
 --------------------------------------------------
-
-local NormalWalkSpeed = 16
-local CurrentHumanoid = nil
-
-local function getHumanoid()
-	local character = Player.Character
-	if not character then
-		return nil
-	end
-
-	return character:FindFirstChildOfClass("Humanoid")
-end
-
-local function captureHumanoid()
-	local humanoid = getHumanoid()
-	if not humanoid then
-		return nil
-	end
-
-	if CurrentHumanoid ~= humanoid then
-		CurrentHumanoid = humanoid
-
-		-- Ao trocar de personagem, captura a velocidade normal dele.
-		NormalWalkSpeed = humanoid.WalkSpeed
-	end
-
-	return humanoid
-end
-
-local function applyWalkSpeed()
-	local humanoid = captureHumanoid()
-	if not humanoid then
-		return
-	end
-
-	-- 0 restaura a velocidade padrão do personagem.
-	local targetSpeed = 16
-
-	-- Valores maiores são somados à velocidade padrão.
-	if Settings.WalkSpeedBoost > 0 then
-		targetSpeed = 16 + Settings.WalkSpeedBoost
-	end
-
-	if humanoid.WalkSpeed ~= targetSpeed then
-		humanoid.WalkSpeed = targetSpeed
-	end
-end
-
-local function setWalkSpeedBoost(value)
-	value = tonumber(value) or 0
-	value = math.clamp(math.floor(value + 0.5), 0, 200)
-
-	local humanoid = captureHumanoid()
-
-	-- A base fica fixa no padrão para que valor 0 nunca herde uma velocidade aumentada.
-	NormalWalkSpeed = 16
-
-	Settings.WalkSpeedBoost = value
-	applyWalkSpeed()
-
-	return value
-end
-
-Player.CharacterAdded:Connect(function(character)
-	local humanoid = character:WaitForChild("Humanoid", 5)
-	if not humanoid then
-		return
-	end
-
-	task.wait(0.15)
-	CurrentHumanoid = humanoid
-	NormalWalkSpeed = 16
-	applyWalkSpeed()
-end)
-
--- Reaplica a velocidade e, se necessário, reforça o movimento horizontal.
--- Isso ajuda em jogos que possuem outro controlador alterando o WalkSpeed.
-RunService.Heartbeat:Connect(function()
-	if Settings.WalkSpeedBoost <= 0 then
-		return
-	end
-
-	local seatedHumanoid = getHumanoid()
-	if seatedHumanoid and seatedHumanoid.SeatPart then
-		return
-	end
-
-	applyWalkSpeed()
-
-	local character = Player.Character
-	if not character then
-		return
-	end
-
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	local root = character:FindFirstChild("HumanoidRootPart")
-
-	if not humanoid or not root then
-		return
-	end
-
-	local direction = humanoid.MoveDirection
-
-	if direction.Magnitude > 0 then
-		local currentY = root.AssemblyLinearVelocity.Y
-		local horizontal = direction.Unit * (NormalWalkSpeed + Settings.WalkSpeedBoost)
-
-		root.AssemblyLinearVelocity = Vector3.new(
-			horizontal.X,
-			currentY,
-			horizontal.Z
-		)
-	end
-end)
-
--- NO CLIP - JOGADOR
+-- SEGUIR PLAYER - JOGADOR
 --------------------------------------------------
 
-local NoClipOriginalCanCollide = {}
+local FollowTarget = nil
 
-local function restoreNoClipCollision()
-	for part, canCollide in pairs(NoClipOriginalCanCollide) do
-		if part and part.Parent then
-			part.CanCollide = canCollide
-		end
+local function setFollowTarget(targetPlayer)
+	if targetPlayer == Player then
+		return
 	end
-	table.clear(NoClipOriginalCanCollide)
+	FollowTarget = targetPlayer
+	Settings.FollowPlayer = targetPlayer ~= nil
 end
 
-local function setNoClip(value)
-	Settings.NoClip = value
-
-	-- Adaptação para um único LocalScript: usa somente física permitida no cliente.
-	-- Não tenta contornar correções/validações feitas pelo servidor.
-	if not value then
-		restoreNoClipCollision()
-	end
+local function stopFollowing()
+	FollowTarget = nil
+	Settings.FollowPlayer = false
 end
 
-RunService.Stepped:Connect(function()
-	if not Settings.NoClip then return end
-
-	local character = Player.Character
-	if not character then return end
-
-	-- Remove a colisão continuamente enquanto o No Clip estiver ativo.
-	for _, object in ipairs(character:GetDescendants()) do
-		if object:IsA("BasePart") then
-			if NoClipOriginalCanCollide[object] == nil then
-				NoClipOriginalCanCollide[object] = object.CanCollide
-			end
-			object.CanCollide = false
-		end
-	end
-end)
-
--- Mantém a montagem física do personagem acordada durante a travessia.
--- Isso reduz correções locais causadas pela própria física do personagem.
 RunService.Heartbeat:Connect(function()
-	if not Settings.NoClip then return end
+	local target = FollowTarget
+	if not Settings.FollowPlayer or not target or target.Parent ~= Players then
+		return
+	end
 
 	local character = Player.Character
+	local targetCharacter = target.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not humanoid or not root then return end
+	local targetRoot = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
+	local targetHumanoid = targetCharacter and targetCharacter:FindFirstChildOfClass("Humanoid")
 
-	humanoid.PlatformStand = false
+	if not humanoid or not root or not targetRoot or not targetHumanoid or targetHumanoid.Health <= 0 then
+		return
+	end
+
+	-- Segue como TP, ficando bem perto e atrás do jogador selecionado.
+	-- Offset local: 3 studs atrás do alvo.
+	local followOffset = CFrame.new(0, 0, 3)
+	local desiredCFrame = targetRoot.CFrame * followOffset
+
+	-- Move o personagem inteiro para acompanhar imediatamente o alvo.
+	character:PivotTo(desiredCFrame)
+	root.AssemblyLinearVelocity = Vector3.zero
 	root.AssemblyAngularVelocity = Vector3.zero
 end)
 
-Player.CharacterAdded:Connect(function(character)
-	table.clear(NoClipOriginalCanCollide)
-
-	character.DescendantAdded:Connect(function(object)
-		if Settings.NoClip and object:IsA("BasePart") then
-			if NoClipOriginalCanCollide[object] == nil then
-				NoClipOriginalCanCollide[object] = object.CanCollide
-			end
-			object.CanCollide = false
-		end
-	end)
+Players.PlayerRemoving:Connect(function(leavingPlayer)
+	if FollowTarget == leavingPlayer then
+		stopFollowing()
+	end
 end)
 
 --------------------------------------------------
@@ -864,8 +733,125 @@ function ShowPlayerMenu()
 		refreshNoWait()
 	end)
 
-	CreateOption(PlayerScroll, "No Clip", 212, Settings.NoClip, function(value)
-		setNoClip(value)
+	-- SEGUIR PLAYER: lista os jogadores que estão no servidor.
+	local FollowCard = Instance.new("Frame")
+	FollowCard.Name = "FollowPlayerCard"
+	FollowCard.Size = UDim2.new(1, -32, 0, 76)
+	FollowCard.Position = UDim2.new(0, 16, 0, 212)
+	FollowCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	FollowCard.BorderSizePixel = 0
+	FollowCard.Parent = PlayerScroll
+
+	local FollowCorner = Instance.new("UICorner")
+	FollowCorner.CornerRadius = UDim.new(0, 7)
+	FollowCorner.Parent = FollowCard
+
+	local FollowLabel = Instance.new("TextLabel")
+	FollowLabel.Size = UDim2.new(0, 155, 1, 0)
+	FollowLabel.Position = UDim2.new(0, 16, 0, 0)
+	FollowLabel.BackgroundTransparency = 1
+	FollowLabel.Text = "Seguir Player"
+	FollowLabel.TextColor3 = Color3.fromRGB(220, 220, 225)
+	FollowLabel.TextSize = 17
+	FollowLabel.Font = Enum.Font.Gotham
+	FollowLabel.TextXAlignment = Enum.TextXAlignment.Left
+	FollowLabel.Parent = FollowCard
+
+	local PlayerSelect = Instance.new("TextButton")
+	PlayerSelect.Size = UDim2.new(0, 245, 0, 36)
+	PlayerSelect.Position = UDim2.new(1, -261, 0.5, -18)
+	PlayerSelect.BackgroundColor3 = Color3.fromRGB(39, 39, 44)
+	PlayerSelect.BorderSizePixel = 0
+	PlayerSelect.Text = "Selecionar jogador"
+	PlayerSelect.TextColor3 = Color3.fromRGB(220, 220, 225)
+	PlayerSelect.TextSize = 13
+	PlayerSelect.Font = Enum.Font.Gotham
+	PlayerSelect.AutoButtonColor = false
+	PlayerSelect.Parent = FollowCard
+
+	local PlayerSelectCorner = Instance.new("UICorner")
+	PlayerSelectCorner.CornerRadius = UDim.new(0, 7)
+	PlayerSelectCorner.Parent = PlayerSelect
+
+	local FollowList = Instance.new("ScrollingFrame")
+	FollowList.Name = "FollowPlayerList"
+	FollowList.Size = UDim2.new(0, 245, 0, 150)
+	FollowList.Position = UDim2.new(1, -261, 1, 4)
+	FollowList.BackgroundColor3 = Color3.fromRGB(31, 31, 36)
+	FollowList.BorderSizePixel = 0
+	FollowList.ScrollBarThickness = 3
+	FollowList.ScrollBarImageColor3 = GetTheme().Accent
+	FollowList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	FollowList.CanvasSize = UDim2.new()
+	FollowList.Visible = false
+	FollowList.ZIndex = 20
+	FollowList.Parent = FollowCard
+
+	local FollowListCorner = Instance.new("UICorner")
+	FollowListCorner.CornerRadius = UDim.new(0, 7)
+	FollowListCorner.Parent = FollowList
+
+	local FollowLayout = Instance.new("UIListLayout")
+	FollowLayout.Padding = UDim.new(0, 3)
+	FollowLayout.Parent = FollowList
+
+	local function refreshFollowPlayers()
+		for _, child in ipairs(FollowList:GetChildren()) do
+			if child:IsA("TextButton") then
+				child:Destroy()
+			end
+		end
+
+		for _, targetPlayer in ipairs(Players:GetPlayers()) do
+			if targetPlayer ~= Player then
+				local Entry = Instance.new("TextButton")
+				Entry.Size = UDim2.new(1, -6, 0, 34)
+				Entry.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+				Entry.BorderSizePixel = 0
+				Entry.Text = targetPlayer.DisplayName .. "  (@" .. targetPlayer.Name .. ")"
+				Entry.TextColor3 = Color3.fromRGB(220, 220, 225)
+				Entry.TextSize = 12
+				Entry.Font = Enum.Font.Gotham
+				Entry.ZIndex = 21
+				Entry.Parent = FollowList
+
+				local EntryCorner = Instance.new("UICorner")
+				EntryCorner.CornerRadius = UDim.new(0, 5)
+				EntryCorner.Parent = Entry
+
+				Entry.Activated:Connect(function()
+					setFollowTarget(targetPlayer)
+					PlayerSelect.Text = "Seguindo: " .. targetPlayer.DisplayName
+					FollowList.Visible = false
+				end)
+			end
+		end
+
+		local Stop = Instance.new("TextButton")
+		Stop.Size = UDim2.new(1, -6, 0, 34)
+		Stop.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+		Stop.BorderSizePixel = 0
+		Stop.Text = "Parar de seguir"
+		Stop.TextColor3 = Color3.fromRGB(220, 220, 225)
+		Stop.TextSize = 12
+		Stop.Font = Enum.Font.Gotham
+		Stop.ZIndex = 21
+		Stop.Parent = FollowList
+
+		local StopCorner = Instance.new("UICorner")
+		StopCorner.CornerRadius = UDim.new(0, 5)
+		StopCorner.Parent = Stop
+
+		Stop.Activated:Connect(function()
+			stopFollowing()
+			PlayerSelect.Text = "Selecionar jogador"
+			FollowList.Visible = false
+		end)
+	end
+
+	PlayerSelect.Activated:Connect(function()
+		refreshFollowPlayers()
+		FollowList.Visible = not FollowList.Visible
 	end)
 
 	local NoWaitHint = Instance.new("TextLabel")
@@ -879,13 +865,13 @@ function ShowPlayerMenu()
 	NoWaitHint.TextXAlignment = Enum.TextXAlignment.Left
 	NoWaitHint.Parent = PlayerScroll
 
-	CreateOption(PlayerScroll, "Aimbot", 306, Settings.Aimbot, function(value)
+	CreateOption(PlayerScroll, "Aimbot", 324, Settings.Aimbot, function(value)
 		Settings.Aimbot = value
 	end)
 
 	local AimbotHint = Instance.new("TextLabel")
 	AimbotHint.Size = UDim2.new(1, -32, 0, 22)
-	AimbotHint.Position = UDim2.new(0, 16, 0, 364)
+	AimbotHint.Position = UDim2.new(0, 16, 0, 382)
 	AimbotHint.BackgroundTransparency = 1
 	AimbotHint.Text = "Mira na cabeça do inimigo mais próximo."
 	AimbotHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -896,7 +882,7 @@ function ShowPlayerMenu()
 
 	local DistanceCard = Instance.new("Frame")
 	DistanceCard.Size = UDim2.new(1, -32, 0, 58)
-	DistanceCard.Position = UDim2.new(0, 16, 0, 400)
+	DistanceCard.Position = UDim2.new(0, 16, 0, 418)
 	DistanceCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	DistanceCard.BorderSizePixel = 0
 	DistanceCard.Parent = PlayerScroll
@@ -941,7 +927,7 @@ function ShowPlayerMenu()
 
 	local DistanceHint = Instance.new("TextLabel")
 	DistanceHint.Size = UDim2.new(1, -32, 0, 22)
-	DistanceHint.Position = UDim2.new(0, 16, 0, 463)
+	DistanceHint.Position = UDim2.new(0, 16, 0, 481)
 	DistanceHint.BackgroundTransparency = 1
 	DistanceHint.Text = "Escolha de 1 a 200 metros."
 	DistanceHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -952,13 +938,13 @@ function ShowPlayerMenu()
 
 
 	-- MIRA TELEGUIDADA - opção separada do Aimbot
-	CreateOption(PlayerScroll, "Mira Teleguiada", 500, Settings.GuidedAim, function(value)
+	CreateOption(PlayerScroll, "Mira Teleguiada", 518, Settings.GuidedAim, function(value)
 		Settings.GuidedAim = value
 	end)
 
 	local GuidedHint = Instance.new("TextLabel")
 	GuidedHint.Size = UDim2.new(1, -32, 0, 22)
-	GuidedHint.Position = UDim2.new(0, 16, 0, 558)
+	GuidedHint.Position = UDim2.new(0, 16, 0, 576)
 	GuidedHint.BackgroundTransparency = 1
 	GuidedHint.Text = "Trava a mira em um inimigo e acompanha seus movimentos."
 	GuidedHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -969,7 +955,7 @@ function ShowPlayerMenu()
 
 	local GuidedDistanceCard = Instance.new("Frame")
 	GuidedDistanceCard.Size = UDim2.new(1, -32, 0, 58)
-	GuidedDistanceCard.Position = UDim2.new(0, 16, 0, 594)
+	GuidedDistanceCard.Position = UDim2.new(0, 16, 0, 612)
 	GuidedDistanceCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	GuidedDistanceCard.BorderSizePixel = 0
 	GuidedDistanceCard.Parent = PlayerScroll
@@ -1014,7 +1000,7 @@ function ShowPlayerMenu()
 
 	local GuidedDistanceHint = Instance.new("TextLabel")
 	GuidedDistanceHint.Size = UDim2.new(1, -32, 0, 22)
-	GuidedDistanceHint.Position = UDim2.new(0, 16, 0, 657)
+	GuidedDistanceHint.Position = UDim2.new(0, 16, 0, 675)
 	GuidedDistanceHint.BackgroundTransparency = 1
 	GuidedDistanceHint.Text = "Alcance independente: escolha de 1 a 500 metros."
 	GuidedDistanceHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -1050,7 +1036,7 @@ function ShowPlayerMenu()
 
 	local BottomSpace = Instance.new("Frame")
 	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
-	BottomSpace.Position = UDim2.new(0, 0, 0, 694)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 712)
 	BottomSpace.BackgroundTransparency = 1
 	BottomSpace.Parent = PlayerScroll
 
