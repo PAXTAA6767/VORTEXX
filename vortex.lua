@@ -820,6 +820,15 @@ function ShowPlayerMenu()
 				EntryCorner.Parent = Entry
 
 				Entry.Activated:Connect(function()
+					local myCharacter = Player.Character
+					local targetCharacter = targetPlayer.Character
+					local targetRoot = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
+
+					-- TP imediato assim que o jogador é escolhido.
+					if myCharacter and targetRoot then
+						myCharacter:PivotTo(targetRoot.CFrame * CFrame.new(0, 0, 3))
+					end
+
 					setFollowTarget(targetPlayer)
 					PlayerSelect.Text = "Seguindo: " .. targetPlayer.DisplayName
 					FollowList.Visible = false
