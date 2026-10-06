@@ -107,10 +107,38 @@ Player.CharacterAdded:Connect(function(character)
 	applyWalkSpeed()
 end)
 
--- Reaplica apenas quando o modo de velocidade está ativo.
+-- Reaplica a velocidade e, se necessário, reforça o movimento horizontal.
+-- Isso ajuda em jogos que possuem outro controlador alterando o WalkSpeed.
 RunService.Heartbeat:Connect(function()
-	if Settings.WalkSpeedBoost > 0 then
-		applyWalkSpeed()
+	if Settings.WalkSpeedBoost <= 0 then
+		return
+	end
+
+	applyWalkSpeed()
+
+	local character = Player.Character
+	if not character then
+		return
+	end
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local root = character:FindFirstChild("HumanoidRootPart")
+
+	if not humanoid or not root then
+		return
+	end
+
+	local direction = humanoid.MoveDirection
+
+	if direction.Magnitude > 0 then
+		local currentY = root.AssemblyLinearVelocity.Y
+		local horizontal = direction.Unit * Settings.WalkSpeedBoost
+
+		root.AssemblyLinearVelocity = Vector3.new(
+			horizontal.X,
+			currentY,
+			horizontal.Z
+		)
 	end
 end)
 
@@ -499,7 +527,7 @@ function ShowPlayerMenu()
 	Hint.Size = UDim2.new(1, -32, 0, 22)
 	Hint.Position = UDim2.new(0, 16, 0, 145)
 	Hint.BackgroundTransparency = 1
-	Hint.Text = "0 = velocidade normal  •  1-100 = WalkSpeed desejado"
+	Hint.Text = "0 = normal  •  1-100 = velocidade do movimento"
 	Hint.TextColor3 = Color3.fromRGB(125, 125, 132)
 	Hint.TextSize = 12
 	Hint.Font = Enum.Font.Gotham
