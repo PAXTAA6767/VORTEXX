@@ -476,26 +476,65 @@ end
 -- Identifica o papel pelo nome da equipe.
 -- Polícia = azul | Ladrão/Criminoso = vermelho | desconhecido = branco
 local function getRoleAndColor(plr)
-    local teamName = plr.Team and plr.Team.Name or ""
-    local name = string.lower(teamName)
+    local team = plr.Team
+    local teamName = team and string.lower(team.Name or "") or ""
 
-    local policeWords = {
-        "policia", "polícia", "police", "cop", "sheriff", "officer", "guarda"
-    }
+    --------------------------------------------------
+    -- 1) PRIMEIRO IDENTIFICA PELO NOME DA EQUIPE
+    --------------------------------------------------
 
-    local thiefWords = {
-        "ladrao", "ladrão", "thief", "criminal", "criminoso", "bandido", "robber", "gangster"
-    }
-
-    for _, word in ipairs(policeWords) do
-        if string.find(name, word, 1, true) then
-            return "Polícia", Color3.fromRGB(70, 145, 255)
-        end
+    -- PRISIONEIRO = LARANJA
+    if string.find(teamName, "prison", 1, true)
+        or string.find(teamName, "prision", 1, true)
+        or string.find(teamName, "preso", 1, true)
+        or string.find(teamName, "prisioneiro", 1, true) then
+        return "Prisioneiro", Color3.fromRGB(255, 170, 0)
     end
 
-    for _, word in ipairs(thiefWords) do
-        if string.find(name, word, 1, true) then
-            return "Ladrão", Color3.fromRGB(255, 75, 75)
+    -- POLÍCIA = AZUL
+    if string.find(teamName, "police", 1, true)
+        or string.find(teamName, "policia", 1, true)
+        or string.find(teamName, "polícia", 1, true)
+        or string.find(teamName, "cop", 1, true)
+        or string.find(teamName, "sheriff", 1, true)
+        or string.find(teamName, "officer", 1, true)
+        or string.find(teamName, "guarda", 1, true) then
+        return "Polícia", Color3.fromRGB(70, 145, 255)
+    end
+
+    -- LADRÃO/CRIMINOSO = VERMELHO
+    if string.find(teamName, "criminal", 1, true)
+        or string.find(teamName, "criminoso", 1, true)
+        or string.find(teamName, "ladrao", 1, true)
+        or string.find(teamName, "ladrão", 1, true)
+        or string.find(teamName, "thief", 1, true)
+        or string.find(teamName, "robber", 1, true)
+        or string.find(teamName, "bandido", 1, true)
+        or string.find(teamName, "gangster", 1, true) then
+        return "Ladrão", Color3.fromRGB(255, 70, 70)
+    end
+
+    --------------------------------------------------
+    -- 2) SE O NOME NÃO BATER, USA A COR DA TEAM
+    --------------------------------------------------
+
+    if team then
+        local brickColor = team.TeamColor
+        local colorName = brickColor and string.lower(brickColor.Name or "") or ""
+
+        -- Laranja
+        if string.find(colorName, "orange", 1, true) then
+            return "Prisioneiro", Color3.fromRGB(255, 170, 0)
+        end
+
+        -- Azul
+        if string.find(colorName, "blue", 1, true) then
+            return "Polícia", Color3.fromRGB(70, 145, 255)
+        end
+
+        -- Vermelho
+        if string.find(colorName, "red", 1, true) then
+            return "Ladrão", Color3.fromRGB(255, 70, 70)
         end
     end
 
