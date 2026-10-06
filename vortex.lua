@@ -10,10 +10,10 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 
 local Settings = {
 	-- Visual
-	EnableESP = false,
-	EnableBoxes = false,
-	EnableNames = false,
-	EnableDistance = false,
+	EnableESP = true,
+	EnableBoxes = true,
+	EnableNames = true,
+	EnableDistance = true,
 	EnableTracers = false,
 
 }
@@ -438,8 +438,8 @@ function ShowMainMenu()
 	ProfileCorner.Parent = Profile
 
 	local Avatar = Instance.new("ImageLabel")
-	Avatar.Size = UDim2.new(0, 118, 0, 118)
-	Avatar.Position = UDim2.new(0, 16, 0.5, -59)
+	Avatar.Size = UDim2.new(0, 84, 0, 84)
+	Avatar.Position = UDim2.new(0, 16, 0.5, -42)
 	Avatar.BackgroundColor3 = Color3.fromRGB(55, 55, 61)
 	Avatar.BorderSizePixel = 0
 	Avatar.Image = ""
@@ -464,8 +464,8 @@ function ShowMainMenu()
 	end)
 
 	local Welcome = Instance.new("TextLabel")
-	Welcome.Size = UDim2.new(0, 470, 0, 48)
-	Welcome.Position = UDim2.new(0, 116, 0, 12)
+	Welcome.Size = UDim2.new(0, 500, 0, 42)
+	Welcome.Position = UDim2.new(0, 118, 0, 10)
 	Welcome.BackgroundTransparency = 1
 	Welcome.RichText = true
 	Welcome.Text = 'Welcome,  <font color="rgb(105,170,225)"><b>' .. Player.DisplayName .. '</b></font>'
@@ -476,8 +476,8 @@ function ShowMainMenu()
 	Welcome.Parent = Profile
 
 	local Username = Instance.new("TextLabel")
-	Username.Size = UDim2.new(0, 420, 0, 28)
-	Username.Position = UDim2.new(0, 116, 0, 49)
+	Username.Size = UDim2.new(0, 420, 0, 24)
+	Username.Position = UDim2.new(0, 118, 0, 39)
 	Username.BackgroundTransparency = 1
 	Username.Text = "@" .. Player.Name
 	Username.TextColor3 = Color3.fromRGB(72, 146, 204)
@@ -488,7 +488,7 @@ function ShowMainMenu()
 
 	local Clock = Instance.new("TextLabel")
 	Clock.Size = UDim2.new(0, 160, 0, 26)
-	Clock.Position = UDim2.new(0, 116, 0, 74)
+	Clock.Position = UDim2.new(0, 118, 0, 61)
 	Clock.BackgroundTransparency = 1
 	Clock.Text = os.date("%H:%M")
 	Clock.TextColor3 = Color3.fromRGB(125, 125, 132)
