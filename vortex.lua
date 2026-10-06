@@ -723,9 +723,9 @@ function ShowMainMenu()
 	-- QUATRO BOTÕES CENTRAIS
 	--------------------------------------------------
 
-	CreateHomeIconButton(-138, "♙", "Jogador", ShowPlayerMenu)
-	CreateHomeIconButton(-68, "◉", "Visual", ShowVisualMenu)
-	CreateHomeIconButton(9, "◇", "Configuração", ShowConfigMenu)
+	CreateHomeIconButton(-138, "🥷", "Jogador", ShowPlayerMenu)
+	CreateHomeIconButton(-68, "📷", "Visual", ShowVisualMenu)
+	CreateHomeIconButton(9, "⚙️", "Configuração", ShowConfigMenu)
 	CreateHomeIconButton(82, "V", "Vortex", function()
 		Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Vortex Ready</font>'
 	end)
