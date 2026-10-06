@@ -2005,7 +2005,29 @@ local function isValidGuidedTarget(targetPlayer)
 	end
 
 	local maxDistance = Settings.GuidedAimDistance * 3.57
-	return (root.Position - localRoot.Position).Magnitude <= maxDistance
+	if (root.Position - localRoot.Position).Magnitude > maxDistance then
+		return false
+	end
+
+	-- A Mira Teleguiada só mantém/trava o alvo se houver visão direta.
+	-- Se uma parede ou outro objeto estiver na frente, o lock é perdido.
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return false
+	end
+
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = {Player.Character}
+	rayParams.IgnoreWater = true
+
+	local origin = camera.CFrame.Position
+	local direction = head.Position - origin
+	local result = workspace:Raycast(origin, direction, rayParams)
+
+	return result ~= nil
+		and result.Instance ~= nil
+		and result.Instance:IsDescendantOf(character)
 end
 
 local function getClosestGuidedTarget()
