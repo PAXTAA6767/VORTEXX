@@ -644,7 +644,7 @@ local function updateESP(plr)
         local parts = {}
 
         if Settings.EnableNames then
-            table.insert(parts, plr.Name .. " [" .. role .. "]")
+            table.insert(parts, plr.Name)
         end
 
         if Settings.EnableDistance then
