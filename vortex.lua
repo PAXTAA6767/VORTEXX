@@ -14,10 +14,10 @@ local Settings = {
 	NoWait = false,
 
 	-- Visual
-	EnableESP = true,
-	EnableBoxes = true,
-	EnableNames = true,
-	EnableDistance = true,
+	EnableESP = false,
+	EnableBoxes = false,
+	EnableNames = false,
+	EnableDistance = false,
 	EnableTracers = false,
 
 }
