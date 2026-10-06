@@ -416,26 +416,60 @@ local function CreateMenuTitle(titleText)
 	Label.Parent = Content
 end
 
-local function CreateHomeIconButton(x, iconText, tooltip, callback)
+local function CreateHomeSquareButton(x, iconText, tooltip, callback, useAvatar)
 	local Button = Instance.new("TextButton")
-	Button.Size = UDim2.new(0, 60, 0, 60)
-	Button.Position = UDim2.new(0.5, x, 0, 205)
+	Button.Size = UDim2.new(0, 82, 0, 82)
+	Button.Position = UDim2.new(0.5, x, 0, 195)
 	Button.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
 	Button.BorderSizePixel = 0
-	Button.Text = iconText
-	Button.TextColor3 = Color3.fromRGB(225, 225, 230)
-	Button.TextSize = 22
-	Button.Font = Enum.Font.GothamBold
+	Button.Text = ""
 	Button.AutoButtonColor = false
 	Button.Parent = Content
 
 	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 7)
+	Corner.CornerRadius = UDim.new(0, 8)
 	Corner.Parent = Button
 
+	if useAvatar then
+		local Avatar = Instance.new("ImageLabel")
+		Avatar.Size = UDim2.new(0, 48, 0, 48)
+		Avatar.Position = UDim2.new(0.5, -24, 0.5, -24)
+		Avatar.BackgroundTransparency = 1
+		Avatar.BorderSizePixel = 0
+		Avatar.ScaleType = Enum.ScaleType.Crop
+		Avatar.Parent = Button
+
+		local AvatarCorner = Instance.new("UICorner")
+		AvatarCorner.CornerRadius = UDim.new(1, 0)
+		AvatarCorner.Parent = Avatar
+
+		task.spawn(function()
+			local ok, image = pcall(function()
+				return Players:GetUserThumbnailAsync(
+					Player.UserId,
+					Enum.ThumbnailType.HeadShot,
+					Enum.ThumbnailSize.Size150x150
+				)
+			end)
+
+			if ok and Avatar.Parent then
+				Avatar.Image = image
+			end
+		end)
+	else
+		local Icon = Instance.new("TextLabel")
+		Icon.Size = UDim2.new(1, 0, 1, 0)
+		Icon.BackgroundTransparency = 1
+		Icon.Text = iconText
+		Icon.TextColor3 = Color3.fromRGB(220, 220, 225)
+		Icon.TextSize = 28
+		Icon.Font = Enum.Font.GothamBold
+		Icon.Parent = Button
+	end
+
 	local Tip = Instance.new("TextLabel")
-	Tip.Size = UDim2.new(0, 120, 0, 24)
-	Tip.Position = UDim2.new(0.5, -60, 1, 5)
+	Tip.Size = UDim2.new(0, 120, 0, 22)
+	Tip.Position = UDim2.new(0.5, -60, 1, 4)
 	Tip.BackgroundTransparency = 1
 	Tip.Text = tooltip
 	Tip.TextColor3 = Color3.fromRGB(145, 145, 152)
@@ -446,7 +480,7 @@ local function CreateHomeIconButton(x, iconText, tooltip, callback)
 
 	Button.MouseEnter:Connect(function()
 		Tip.Visible = true
-		Button.BackgroundColor3 = Color3.fromRGB(49, 49, 56)
+		Button.BackgroundColor3 = Color3.fromRGB(50, 50, 57)
 	end)
 
 	Button.MouseLeave:Connect(function()
@@ -455,6 +489,7 @@ local function CreateHomeIconButton(x, iconText, tooltip, callback)
 	end)
 
 	Button.Activated:Connect(callback)
+
 	return Button
 end
 
@@ -723,12 +758,12 @@ function ShowMainMenu()
 	-- QUATRO BOTÕES CENTRAIS
 	--------------------------------------------------
 
-	CreateHomeIconButton(-138, "🥷", "Jogador", ShowPlayerMenu)
-	CreateHomeIconButton(-68, "📷", "Visual", ShowVisualMenu)
-	CreateHomeIconButton(9, "⚙️", "Configuração", ShowConfigMenu)
-	CreateHomeIconButton(82, "V", "Vortex", function()
-		Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Vortex Ready</font>'
-	end)
+	CreateHomeSquareButton(-180, "♙", "Jogador", ShowPlayerMenu, false)
+	CreateHomeSquareButton(-88, "◉", "Visual", ShowVisualMenu, false)
+	CreateHomeSquareButton(4, "◇", "Configuração", ShowConfigMenu, false)
+	CreateHomeSquareButton(96, "", "Perfil", function()
+		Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Perfil</font>'
+	end, true)
 end
 
 --------------------------------------------------
