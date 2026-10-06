@@ -17,7 +17,7 @@ end
 local Settings = {
 	-- Jogador
 	WalkSpeedBoost = 0,
-	NoWait = false,
+	AutoUncuff = false,
 	FollowPlayer = false,
 	Aimbot = false,
 	AimbotDistance = 100,
@@ -188,50 +188,58 @@ Players.PlayerRemoving:Connect(function(leavingPlayer)
 end)
 
 --------------------------------------------------
--- NO WAIT - PROXIMITY PROMPTS
+-- AUTO DESALGEMAR - JOGADOR
+-- Sistema genérico para o próprio jogo.
+-- O servidor deve usar o atributo "Handcuffed" no Player ou Character.
 --------------------------------------------------
 
-local OriginalPromptDurations = {}
+local AutoUncuffRemote = nil
 
-local function applyNoWaitToPrompt(prompt)
-	if not prompt:IsA("ProximityPrompt") then
+local function findAutoUncuffRemote()
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local remote = ReplicatedStorage:FindFirstChild("VortexUncuff")
+
+	if remote and remote:IsA("RemoteEvent") then
+		AutoUncuffRemote = remote
+	else
+		AutoUncuffRemote = nil
+	end
+end
+
+findAutoUncuffRemote()
+
+local function isHandcuffed()
+	local character = Player.Character
+	return Player:GetAttribute("Handcuffed") == true
+		or (character and character:GetAttribute("Handcuffed") == true)
+end
+
+local function requestUncuff()
+	if not Settings.AutoUncuff or not isHandcuffed() then
 		return
 	end
 
-	if OriginalPromptDurations[prompt] == nil then
-		OriginalPromptDurations[prompt] = prompt.HoldDuration
+	if not AutoUncuffRemote or not AutoUncuffRemote.Parent then
+		findAutoUncuffRemote()
 	end
 
-	if Settings.NoWait then
-		prompt.HoldDuration = 0
-	else
-		prompt.HoldDuration = OriginalPromptDurations[prompt]
+	if AutoUncuffRemote then
+		AutoUncuffRemote:FireServer()
 	end
 end
 
-local function refreshNoWait()
-	for _, object in ipairs(workspace:GetDescendants()) do
-		if object:IsA("ProximityPrompt") then
-			applyNoWaitToPrompt(object)
-		end
-	end
+Player:GetAttributeChangedSignal("Handcuffed"):Connect(requestUncuff)
+
+local function watchCharacter(character)
+	character:GetAttributeChangedSignal("Handcuffed"):Connect(requestUncuff)
+	task.defer(requestUncuff)
 end
 
-workspace.DescendantAdded:Connect(function(object)
-	if object:IsA("ProximityPrompt") then
-		task.defer(function()
-			if object.Parent then
-				applyNoWaitToPrompt(object)
-			end
-		end)
-	end
-end)
+if Player.Character then
+	watchCharacter(Player.Character)
+end
 
-workspace.DescendantRemoving:Connect(function(object)
-	if object:IsA("ProximityPrompt") then
-		OriginalPromptDurations[object] = nil
-	end
-end)
+Player.CharacterAdded:Connect(watchCharacter)
 
 --------------------------------------------------
 -- GUI
@@ -816,22 +824,24 @@ function ShowPlayerMenu()
 	Hint.TextXAlignment = Enum.TextXAlignment.Left
 	Hint.Parent = PlayerScroll
 
-	CreateOption(PlayerScroll, "No Wait", 118, Settings.NoWait, function(value)
-		Settings.NoWait = value
-		refreshNoWait()
+	CreateOption(PlayerScroll, "Auto Desalgemar", 118, Settings.AutoUncuff, function(value)
+		Settings.AutoUncuff = value
+		if value then
+			requestUncuff()
+		end
 	end)
 
 
-	local NoWaitHint = Instance.new("TextLabel")
-	NoWaitHint.Size = UDim2.new(1, -32, 0, 22)
-	NoWaitHint.Position = UDim2.new(0, 16, 0, 176)
-	NoWaitHint.BackgroundTransparency = 1
-	NoWaitHint.Text = "Remove o tempo de espera ao interagir com objetos."
-	NoWaitHint.TextColor3 = Color3.fromRGB(125, 125, 132)
-	NoWaitHint.TextSize = 12
-	NoWaitHint.Font = Enum.Font.Gotham
-	NoWaitHint.TextXAlignment = Enum.TextXAlignment.Left
-	NoWaitHint.Parent = PlayerScroll
+	local AutoUncuffHint = Instance.new("TextLabel")
+	AutoUncuffHint.Size = UDim2.new(1, -32, 0, 22)
+	AutoUncuffHint.Position = UDim2.new(0, 16, 0, 176)
+	AutoUncuffHint.BackgroundTransparency = 1
+	AutoUncuffHint.Text = "Desalgema automaticamente quando o servidor marcar você como algemado."
+	AutoUncuffHint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	AutoUncuffHint.TextSize = 12
+	AutoUncuffHint.Font = Enum.Font.Gotham
+	AutoUncuffHint.TextXAlignment = Enum.TextXAlignment.Left
+	AutoUncuffHint.Parent = PlayerScroll
 
 	CreateOption(PlayerScroll, "Aimbot", 212, Settings.Aimbot, function(value)
 		Settings.Aimbot = value
