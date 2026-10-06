@@ -18,7 +18,7 @@ local Settings = {
 	-- Jogador
 	WalkSpeedBoost = 0,
 	NoWait = false,
-	GodMode = false,
+	NoClip = false,
 	Aimbot = false,
 	AimbotDistance = 100,
 	GuidedAim = false,
@@ -162,118 +162,45 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
--- GOD MODE - JOGADOR
+-- NO CLIP - JOGADOR
 --------------------------------------------------
 
-local GodModeHumanoid = nil
-local GodModeHealthConnection = nil
-local GodModeMaxHealthConnection = nil
-local GodModePreviousMaxHealth = nil
-local GOD_MODE_HEALTH = 1000000
+local NoClipOriginalCanCollide = {}
 
-local function disconnectGodModeConnections()
-	if GodModeHealthConnection then
-		GodModeHealthConnection:Disconnect()
-		GodModeHealthConnection = nil
+local function restoreNoClipCollision()
+	for part, canCollide in pairs(NoClipOriginalCanCollide) do
+		if part and part.Parent then
+			part.CanCollide = canCollide
+		end
 	end
+	table.clear(NoClipOriginalCanCollide)
+end
 
-	if GodModeMaxHealthConnection then
-		GodModeMaxHealthConnection:Disconnect()
-		GodModeMaxHealthConnection = nil
+local function setNoClip(value)
+	Settings.NoClip = value
+	if not value then
+		restoreNoClipCollision()
 	end
 end
 
-local function applyGodMode()
+RunService.Stepped:Connect(function()
+	if not Settings.NoClip then return end
+
 	local character = Player.Character
 	if not character then return end
 
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return end
-
-	if Settings.GodMode then
-		if GodModeHumanoid ~= humanoid then
-			disconnectGodModeConnections()
-			GodModeHumanoid = humanoid
-			GodModePreviousMaxHealth = humanoid.MaxHealth
-
-			-- Dá uma reserva enorme de vida para evitar que um único golpe
-			-- mate o personagem antes do próximo frame.
-			humanoid.MaxHealth = GOD_MODE_HEALTH
-			humanoid.Health = GOD_MODE_HEALTH
-
-			GodModeHealthConnection = humanoid.HealthChanged:Connect(function(health)
-				if Settings.GodMode and humanoid.Parent and health < humanoid.MaxHealth then
-					humanoid.Health = humanoid.MaxHealth
-				end
-			end)
-
-			GodModeMaxHealthConnection = humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(function()
-				if Settings.GodMode and humanoid.Parent and humanoid.MaxHealth < GOD_MODE_HEALTH then
-					humanoid.MaxHealth = GOD_MODE_HEALTH
-					humanoid.Health = GOD_MODE_HEALTH
-				end
-			end)
+	for _, object in ipairs(character:GetDescendants()) do
+		if object:IsA("BasePart") then
+			if NoClipOriginalCanCollide[object] == nil then
+				NoClipOriginalCanCollide[object] = object.CanCollide
+			end
+			object.CanCollide = false
 		end
-
-		if humanoid.Health < humanoid.MaxHealth then
-			humanoid.Health = humanoid.MaxHealth
-		end
-	else
-		disconnectGodModeConnections()
-
-		if GodModeHumanoid == humanoid and GodModePreviousMaxHealth then
-			humanoid.MaxHealth = GodModePreviousMaxHealth
-			humanoid.Health = math.min(humanoid.Health, humanoid.MaxHealth)
-		end
-
-		GodModeHumanoid = nil
-		GodModePreviousMaxHealth = nil
-	end
-end
-
-RunService.Heartbeat:Connect(function()
-	if Settings.GodMode then
-		applyGodMode()
 	end
 end)
-
-
--- Reforço local do God Mode para testes.
--- Mantém vida/MaxHealth restaurados a cada frame e tenta impedir estados de morte.
-RunService.Heartbeat:Connect(function()
-	if not Settings.GodMode then
-		return
-	end
-
-	local character = Player.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	if not humanoid or not humanoid.Parent then
-		return
-	end
-
-	if humanoid.MaxHealth < GOD_MODE_HEALTH then
-		humanoid.MaxHealth = GOD_MODE_HEALTH
-	end
-
-	if humanoid.Health < GOD_MODE_HEALTH then
-		humanoid.Health = GOD_MODE_HEALTH
-	end
-
-	if humanoid:GetState() == Enum.HumanoidStateType.Dead then
-		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-	end
-
-	humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-end)
-
 
 Player.CharacterAdded:Connect(function()
-	disconnectGodModeConnections()
-	GodModeHumanoid = nil
-	GodModePreviousMaxHealth = nil
-
-	task.wait(0.25)
-	applyGodMode()
+	table.clear(NoClipOriginalCanCollide)
 end)
 
 --------------------------------------------------
@@ -910,9 +837,8 @@ function ShowPlayerMenu()
 		refreshNoWait()
 	end)
 
-	CreateOption(PlayerScroll, "God Mode", 212, Settings.GodMode, function(value)
-		Settings.GodMode = value
-		applyGodMode()
+	CreateOption(PlayerScroll, "No Clip", 212, Settings.NoClip, function(value)
+		setNoClip(value)
 	end)
 
 	local NoWaitHint = Instance.new("TextLabel")
