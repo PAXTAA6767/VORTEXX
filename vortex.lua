@@ -17,6 +17,11 @@ end
 local Settings = {
 	-- Jogador
 	WalkSpeedBoost = 0,
+	NoWait = false,
+	GodMode = false,
+	Aimbot = false,
+	AimbotDistance = 100,
+	VehicleSpeedMultiplier = 1.0,
 
 	-- Interface
 	ToggleKey = Enum.KeyCode.K,
@@ -34,6 +39,7 @@ local Settings = {
 -- Será definido na parte do ESP; permite que os toggles atualizem imediatamente.
 local refreshAllESP
 local GetTheme
+local getRoleAndColor
 
 
 --------------------------------------------------
@@ -124,6 +130,11 @@ RunService.Heartbeat:Connect(function()
 		return
 	end
 
+	local seatedHumanoid = getHumanoid()
+	if seatedHumanoid and seatedHumanoid.SeatPart then
+		return
+	end
+
 	applyWalkSpeed()
 
 	local character = Player.Character
@@ -153,6 +164,234 @@ RunService.Heartbeat:Connect(function()
 end)
 
 --------------------------------------------------
+-- VELOCIDADE DO VEÍCULO - ATÉ 10X
+-- Funciona com veículos baseados em VehicleSeat.
+--------------------------------------------------
+
+local CurrentVehicleSeat = nil
+local OriginalVehicleMaxSpeed = nil
+
+local function getDrivenVehicleSeat()
+	local character = Player.Character
+	if not character then return nil end
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return nil end
+
+	local seat = humanoid.SeatPart
+	if seat and seat:IsA("VehicleSeat") then
+		return seat
+	end
+
+	return nil
+end
+
+local function restoreVehicleSpeed()
+	if CurrentVehicleSeat and CurrentVehicleSeat.Parent and OriginalVehicleMaxSpeed then
+		CurrentVehicleSeat.MaxSpeed = OriginalVehicleMaxSpeed
+	end
+
+	CurrentVehicleSeat = nil
+	OriginalVehicleMaxSpeed = nil
+end
+
+local function applyVehicleSpeed()
+	local seat = getDrivenVehicleSeat()
+
+	if not seat then
+		restoreVehicleSpeed()
+		return
+	end
+
+	if CurrentVehicleSeat ~= seat then
+		restoreVehicleSpeed()
+		CurrentVehicleSeat = seat
+		OriginalVehicleMaxSpeed = seat.MaxSpeed
+	end
+
+	if not OriginalVehicleMaxSpeed then
+		return
+	end
+
+	seat.MaxSpeed = OriginalVehicleMaxSpeed * Settings.VehicleSpeedMultiplier
+
+	-- Reforço perceptível: aumenta também a velocidade horizontal real
+	-- do conjunto do veículo quando ele já estiver em movimento.
+	if Settings.VehicleSpeedMultiplier > 1 then
+		local assembly = seat.AssemblyRootPart or seat
+		local character = Player.Character
+
+		-- Nunca acelera uma peça pertencente ao personagem.
+		if character and assembly:IsDescendantOf(character) then
+			return
+		end
+
+		local velocity = assembly.AssemblyLinearVelocity
+		local horizontal = Vector3.new(velocity.X, 0, velocity.Z)
+
+		if horizontal.Magnitude > 1 then
+			local baseLimit = math.max(OriginalVehicleMaxSpeed, 1)
+			local targetSpeed = baseLimit * Settings.VehicleSpeedMultiplier
+			local boostedSpeed = math.min(horizontal.Magnitude * 1.035, targetSpeed)
+			local direction = horizontal.Unit
+
+			assembly.AssemblyLinearVelocity = Vector3.new(
+				direction.X * boostedSpeed,
+				velocity.Y,
+				direction.Z * boostedSpeed
+			)
+		end
+	end
+end
+
+local function setVehicleSpeedMultiplier(value)
+	value = tonumber(value) or 1
+	value = math.clamp(value, 1, 10)
+
+	-- Duas casas no máximo.
+	value = math.floor(value * 100 + 0.5) / 100
+	Settings.VehicleSpeedMultiplier = value
+	applyVehicleSpeed()
+
+	return value
+end
+
+RunService.Heartbeat:Connect(function()
+	applyVehicleSpeed()
+end)
+
+--------------------------------------------------
+-- GOD MODE - JOGADOR
+--------------------------------------------------
+
+local GodModeHumanoid = nil
+local GodModeHealthConnection = nil
+local GodModeMaxHealthConnection = nil
+local GodModePreviousMaxHealth = nil
+local GOD_MODE_HEALTH = 1000000
+
+local function disconnectGodModeConnections()
+	if GodModeHealthConnection then
+		GodModeHealthConnection:Disconnect()
+		GodModeHealthConnection = nil
+	end
+
+	if GodModeMaxHealthConnection then
+		GodModeMaxHealthConnection:Disconnect()
+		GodModeMaxHealthConnection = nil
+	end
+end
+
+local function applyGodMode()
+	local character = Player.Character
+	if not character then return end
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	if Settings.GodMode then
+		if GodModeHumanoid ~= humanoid then
+			disconnectGodModeConnections()
+			GodModeHumanoid = humanoid
+			GodModePreviousMaxHealth = humanoid.MaxHealth
+
+			-- Dá uma reserva enorme de vida para evitar que um único golpe
+			-- mate o personagem antes do próximo frame.
+			humanoid.MaxHealth = GOD_MODE_HEALTH
+			humanoid.Health = GOD_MODE_HEALTH
+
+			GodModeHealthConnection = humanoid.HealthChanged:Connect(function(health)
+				if Settings.GodMode and humanoid.Parent and health < humanoid.MaxHealth then
+					humanoid.Health = humanoid.MaxHealth
+				end
+			end)
+
+			GodModeMaxHealthConnection = humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(function()
+				if Settings.GodMode and humanoid.Parent and humanoid.MaxHealth < GOD_MODE_HEALTH then
+					humanoid.MaxHealth = GOD_MODE_HEALTH
+					humanoid.Health = GOD_MODE_HEALTH
+				end
+			end)
+		end
+
+		if humanoid.Health < humanoid.MaxHealth then
+			humanoid.Health = humanoid.MaxHealth
+		end
+	else
+		disconnectGodModeConnections()
+
+		if GodModeHumanoid == humanoid and GodModePreviousMaxHealth then
+			humanoid.MaxHealth = GodModePreviousMaxHealth
+			humanoid.Health = math.min(humanoid.Health, humanoid.MaxHealth)
+		end
+
+		GodModeHumanoid = nil
+		GodModePreviousMaxHealth = nil
+	end
+end
+
+RunService.Heartbeat:Connect(function()
+	if Settings.GodMode then
+		applyGodMode()
+	end
+end)
+
+Player.CharacterAdded:Connect(function()
+	disconnectGodModeConnections()
+	GodModeHumanoid = nil
+	GodModePreviousMaxHealth = nil
+
+	task.wait(0.25)
+	applyGodMode()
+end)
+
+--------------------------------------------------
+-- NO WAIT - PROXIMITY PROMPTS
+--------------------------------------------------
+
+local OriginalPromptDurations = {}
+
+local function applyNoWaitToPrompt(prompt)
+	if not prompt:IsA("ProximityPrompt") then
+		return
+	end
+
+	if OriginalPromptDurations[prompt] == nil then
+		OriginalPromptDurations[prompt] = prompt.HoldDuration
+	end
+
+	if Settings.NoWait then
+		prompt.HoldDuration = 0
+	else
+		prompt.HoldDuration = OriginalPromptDurations[prompt]
+	end
+end
+
+local function refreshNoWait()
+	for _, object in ipairs(workspace:GetDescendants()) do
+		if object:IsA("ProximityPrompt") then
+			applyNoWaitToPrompt(object)
+		end
+	end
+end
+
+workspace.DescendantAdded:Connect(function(object)
+	if object:IsA("ProximityPrompt") then
+		task.defer(function()
+			if object.Parent then
+				applyNoWaitToPrompt(object)
+			end
+		end)
+	end
+end)
+
+workspace.DescendantRemoving:Connect(function(object)
+	if object:IsA("ProximityPrompt") then
+		OriginalPromptDurations[object] = nil
+	end
+end)
+
+--------------------------------------------------
 -- GUI
 --------------------------------------------------
 
@@ -168,8 +407,8 @@ Gui.Parent = PlayerGui
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 700, 0, 460)
-Main.Position = UDim2.new(0.5, -350, 0.5, -230)
+Main.Size = UDim2.new(0, 620, 0, 400)
+Main.Position = UDim2.new(0.5, -310, 0.5, -200)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 29)
 Main.BorderSizePixel = 0
 Main.Visible = false
@@ -272,7 +511,7 @@ local AddressText = Instance.new("TextLabel")
 AddressText.Size = UDim2.new(1, -48, 1, 0)
 AddressText.Position = UDim2.new(0, 42, 0, 0)
 AddressText.BackgroundTransparency = 1
-AddressText.Text = "https://github.com/PAXTAA6767/VORTEXX/home"
+AddressText.Text = "https://github.com/vtx/vortex/home"
 AddressText.TextColor3 = Color3.fromRGB(145, 145, 150)
 AddressText.TextSize = 16
 AddressText.Font = Enum.Font.Gotham
@@ -341,6 +580,19 @@ Status.Font = Enum.Font.Gotham
 Status.TextXAlignment = Enum.TextXAlignment.Left
 Status.TextColor3 = Color3.fromRGB(120, 120, 125)
 Status.Parent = Main
+
+-- Crédito no canto inferior direito
+local Credit = Instance.new("TextLabel")
+Credit.Name = "Credit"
+Credit.Size = UDim2.new(0, 180, 0, 18)
+Credit.Position = UDim2.new(1, -190, 1, -20)
+Credit.BackgroundTransparency = 1
+Credit.Text = "Feito Por Vitexx"
+Credit.TextColor3 = Color3.fromRGB(105, 85, 255) -- atualizado pelo ApplyTheme
+Credit.TextSize = 12
+Credit.Font = Enum.Font.Gotham
+Credit.TextXAlignment = Enum.TextXAlignment.Right
+Credit.Parent = Main
 
 --------------------------------------------------
 -- HELPERS
@@ -613,6 +865,7 @@ local function ApplyTheme(themeName)
 	Address.BackgroundColor3 = theme.Address
 	Content.BackgroundColor3 = theme.Content
 	SearchIcon.ImageColor3 = theme.Accent
+	Credit.TextColor3 = theme.Accent
 
 	-- O tema Galaxia usa um degradê real no fundo da área principal.
 	local galaxyEnabled = themeName == "Galaxia"
@@ -640,12 +893,27 @@ function ShowPlayerMenu()
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Jogador")
 
+	-- Área rolável da aba Jogador.
+	local PlayerScroll = Instance.new("ScrollingFrame")
+	PlayerScroll.Name = "PlayerScroll"
+	PlayerScroll.Size = UDim2.new(1, -12, 1, -64)
+	PlayerScroll.Position = UDim2.new(0, 6, 0, 64)
+	PlayerScroll.BackgroundTransparency = 1
+	PlayerScroll.BorderSizePixel = 0
+	PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 390)
+	PlayerScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	PlayerScroll.ScrollBarThickness = 4
+	PlayerScroll.ScrollBarImageColor3 = GetTheme().Accent
+	PlayerScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+	PlayerScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+	PlayerScroll.Parent = Content
+
 	local WalkCard = Instance.new("Frame")
 	WalkCard.Size = UDim2.new(1, -32, 0, 58)
-	WalkCard.Position = UDim2.new(0, 16, 0, 82)
+	WalkCard.Position = UDim2.new(0, 16, 0, 18)
 	WalkCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	WalkCard.BorderSizePixel = 0
-	WalkCard.Parent = Content
+	WalkCard.Parent = PlayerScroll
 
 	local WalkCorner = Instance.new("UICorner")
 	WalkCorner.CornerRadius = UDim.new(0, 8)
@@ -689,7 +957,7 @@ function ShowPlayerMenu()
 	Pencil.Size = UDim2.new(0, 40, 1, 0)
 	Pencil.Position = UDim2.new(1, -50, 0, 0)
 	Pencil.BackgroundTransparency = 1
-	Pencil.Text = "✎"
+	Pencil.Text = "👟"
 	Pencil.TextColor3 = Color3.fromRGB(190, 190, 198)
 	Pencil.TextSize = 22
 	Pencil.Font = Enum.Font.Gotham
@@ -697,14 +965,202 @@ function ShowPlayerMenu()
 
 	local Hint = Instance.new("TextLabel")
 	Hint.Size = UDim2.new(1, -32, 0, 22)
-	Hint.Position = UDim2.new(0, 16, 0, 145)
+	Hint.Position = UDim2.new(0, 16, 0, 81)
 	Hint.BackgroundTransparency = 1
 	Hint.Text = "0 = normal  •  1-100 = velocidade do movimento"
 	Hint.TextColor3 = Color3.fromRGB(125, 125, 132)
 	Hint.TextSize = 12
 	Hint.Font = Enum.Font.Gotham
 	Hint.TextXAlignment = Enum.TextXAlignment.Left
-	Hint.Parent = Content
+	Hint.Parent = PlayerScroll
+
+	CreateOption(PlayerScroll, "No Wait", 118, Settings.NoWait, function(value)
+		Settings.NoWait = value
+		refreshNoWait()
+	end)
+
+	CreateOption(PlayerScroll, "God Mode", 212, Settings.GodMode, function(value)
+		Settings.GodMode = value
+		applyGodMode()
+	end)
+
+	local NoWaitHint = Instance.new("TextLabel")
+	NoWaitHint.Size = UDim2.new(1, -32, 0, 22)
+	NoWaitHint.Position = UDim2.new(0, 16, 0, 176)
+	NoWaitHint.BackgroundTransparency = 1
+	NoWaitHint.Text = "Remove o tempo de espera ao interagir com objetos."
+	NoWaitHint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	NoWaitHint.TextSize = 12
+	NoWaitHint.Font = Enum.Font.Gotham
+	NoWaitHint.TextXAlignment = Enum.TextXAlignment.Left
+	NoWaitHint.Parent = PlayerScroll
+
+	CreateOption(PlayerScroll, "Aimbot", 306, Settings.Aimbot, function(value)
+		Settings.Aimbot = value
+	end)
+
+	local AimbotHint = Instance.new("TextLabel")
+	AimbotHint.Size = UDim2.new(1, -32, 0, 22)
+	AimbotHint.Position = UDim2.new(0, 16, 0, 364)
+	AimbotHint.BackgroundTransparency = 1
+	AimbotHint.Text = "Mira na cabeça do inimigo mais próximo."
+	AimbotHint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	AimbotHint.TextSize = 12
+	AimbotHint.Font = Enum.Font.Gotham
+	AimbotHint.TextXAlignment = Enum.TextXAlignment.Left
+	AimbotHint.Parent = PlayerScroll
+
+	local DistanceCard = Instance.new("Frame")
+	DistanceCard.Size = UDim2.new(1, -32, 0, 58)
+	DistanceCard.Position = UDim2.new(0, 16, 0, 400)
+	DistanceCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	DistanceCard.BorderSizePixel = 0
+	DistanceCard.Parent = PlayerScroll
+
+	local DistanceCorner = Instance.new("UICorner")
+	DistanceCorner.CornerRadius = UDim.new(0, 8)
+	DistanceCorner.Parent = DistanceCard
+
+	local DistanceLabel = Instance.new("TextLabel")
+	DistanceLabel.Size = UDim2.new(1, -230, 1, 0)
+	DistanceLabel.Position = UDim2.new(0, 16, 0, 0)
+	DistanceLabel.BackgroundTransparency = 1
+	DistanceLabel.Text = "Distância do Aimbot"
+	DistanceLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
+	DistanceLabel.TextSize = 17
+	DistanceLabel.Font = Enum.Font.Gotham
+	DistanceLabel.TextXAlignment = Enum.TextXAlignment.Left
+	DistanceLabel.Parent = DistanceCard
+
+	local DistanceInput = Instance.new("TextBox")
+	DistanceInput.Size = UDim2.new(0, 142, 0, 34)
+	DistanceInput.Position = UDim2.new(1, -158, 0.5, -17)
+	DistanceInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+	DistanceInput.BorderSizePixel = 0
+	DistanceInput.Text = tostring(Settings.AimbotDistance)
+	DistanceInput.PlaceholderText = "1 - 200 m"
+	DistanceInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
+	DistanceInput.TextColor3 = Color3.fromRGB(220, 220, 225)
+	DistanceInput.TextSize = 14
+	DistanceInput.Font = Enum.Font.Gotham
+	DistanceInput.ClearTextOnFocus = false
+	DistanceInput.Parent = DistanceCard
+
+	local DistanceStroke = Instance.new("UIStroke")
+	DistanceStroke.Thickness = 1.5
+	DistanceStroke.Color = GetTheme().Accent
+	DistanceStroke.Parent = DistanceInput
+
+	local DistanceInputCorner = Instance.new("UICorner")
+	DistanceInputCorner.CornerRadius = UDim.new(0, 8)
+	DistanceInputCorner.Parent = DistanceInput
+
+	local DistanceHint = Instance.new("TextLabel")
+	DistanceHint.Size = UDim2.new(1, -32, 0, 22)
+	DistanceHint.Position = UDim2.new(0, 16, 0, 463)
+	DistanceHint.BackgroundTransparency = 1
+	DistanceHint.Text = "Escolha de 1 a 200 metros."
+	DistanceHint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	DistanceHint.TextSize = 12
+	DistanceHint.Font = Enum.Font.Gotham
+	DistanceHint.TextXAlignment = Enum.TextXAlignment.Left
+	DistanceHint.Parent = PlayerScroll
+
+	local VehicleSpeedCard = Instance.new("Frame")
+	VehicleSpeedCard.Size = UDim2.new(1, -32, 0, 58)
+	VehicleSpeedCard.Position = UDim2.new(0, 16, 0, 496)
+	VehicleSpeedCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	VehicleSpeedCard.BorderSizePixel = 0
+	VehicleSpeedCard.Parent = PlayerScroll
+
+	local VehicleSpeedCorner = Instance.new("UICorner")
+	VehicleSpeedCorner.CornerRadius = UDim.new(0, 8)
+	VehicleSpeedCorner.Parent = VehicleSpeedCard
+
+	local VehicleSpeedLabel = Instance.new("TextLabel")
+	VehicleSpeedLabel.Size = UDim2.new(1, -230, 1, 0)
+	VehicleSpeedLabel.Position = UDim2.new(0, 16, 0, 0)
+	VehicleSpeedLabel.BackgroundTransparency = 1
+	VehicleSpeedLabel.Text = "Velocidade do Veículo"
+	VehicleSpeedLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
+	VehicleSpeedLabel.TextSize = 17
+	VehicleSpeedLabel.Font = Enum.Font.Gotham
+	VehicleSpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+	VehicleSpeedLabel.Parent = VehicleSpeedCard
+
+	local VehicleSpeedInput = Instance.new("TextBox")
+	VehicleSpeedInput.Size = UDim2.new(0, 142, 0, 34)
+	VehicleSpeedInput.Position = UDim2.new(1, -158, 0.5, -17)
+	VehicleSpeedInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+	VehicleSpeedInput.BorderSizePixel = 0
+	VehicleSpeedInput.Text = string.format("%.1fx", Settings.VehicleSpeedMultiplier)
+	VehicleSpeedInput.PlaceholderText = "1.0 - 10.0x"
+	VehicleSpeedInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
+	VehicleSpeedInput.TextColor3 = Color3.fromRGB(220, 220, 225)
+	VehicleSpeedInput.TextSize = 14
+	VehicleSpeedInput.Font = Enum.Font.Gotham
+	VehicleSpeedInput.ClearTextOnFocus = false
+	VehicleSpeedInput.Parent = VehicleSpeedCard
+
+	local VehicleSpeedStroke = Instance.new("UIStroke")
+	VehicleSpeedStroke.Thickness = 1.5
+	VehicleSpeedStroke.Color = GetTheme().Accent
+	VehicleSpeedStroke.Parent = VehicleSpeedInput
+
+	local VehicleSpeedInputCorner = Instance.new("UICorner")
+	VehicleSpeedInputCorner.CornerRadius = UDim.new(0, 8)
+	VehicleSpeedInputCorner.Parent = VehicleSpeedInput
+
+	local VehicleSpeedHint = Instance.new("TextLabel")
+	VehicleSpeedHint.Size = UDim2.new(1, -32, 0, 22)
+	VehicleSpeedHint.Position = UDim2.new(0, 16, 0, 559)
+	VehicleSpeedHint.BackgroundTransparency = 1
+	VehicleSpeedHint.Text = "1.0x = normal  •  máximo = 10.0x"
+	VehicleSpeedHint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	VehicleSpeedHint.TextSize = 12
+	VehicleSpeedHint.Font = Enum.Font.Gotham
+	VehicleSpeedHint.TextXAlignment = Enum.TextXAlignment.Left
+	VehicleSpeedHint.Parent = PlayerScroll
+
+	local function applyVehicleSpeedInput()
+		local raw = VehicleSpeedInput.Text:gsub(",", "."):gsub("[^%d%.]", "")
+		local value = tonumber(raw) or Settings.VehicleSpeedMultiplier
+		value = setVehicleSpeedMultiplier(value)
+		VehicleSpeedInput.Text = string.format("%.1fx", value)
+	end
+
+	VehicleSpeedInput.FocusLost:Connect(applyVehicleSpeedInput)
+
+	local BottomSpace = Instance.new("Frame")
+	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 592)
+	BottomSpace.BackgroundTransparency = 1
+	BottomSpace.Parent = PlayerScroll
+
+	local function applyAimbotDistance()
+		local raw = DistanceInput.Text:gsub("[^%d]", "")
+		local value = tonumber(raw) or Settings.AimbotDistance
+		value = math.clamp(math.floor(value + 0.5), 1, 200)
+		Settings.AimbotDistance = value
+		DistanceInput.Text = tostring(value)
+	end
+
+	DistanceInput.FocusLost:Connect(applyAimbotDistance)
+
+	DistanceInput:GetPropertyChangedSignal("Text"):Connect(function()
+		local clean = DistanceInput.Text:gsub("[^%d]", "")
+		if clean ~= DistanceInput.Text then
+			DistanceInput.Text = clean
+			return
+		end
+
+		if clean ~= "" then
+			local value = tonumber(clean)
+			if value and value > 200 then
+				DistanceInput.Text = "200"
+			end
+		end
+	end)
 
 	local function applyInput()
 		local raw = WalkInput.Text:gsub("[^%d]", "")
@@ -737,38 +1193,62 @@ end
 function ShowVisualMenu()
 	ClearContent()
 	AddressText.Text = "Vortex / Visuals"
+
+	-- Área rolável exclusiva da aba Visual.
+	-- O cabeçalho fica parado e somente as opções rolam.
+	local VisualScroll = Instance.new("ScrollingFrame")
+	VisualScroll.Name = "VisualScroll"
+	VisualScroll.Size = UDim2.new(1, -12, 1, -64)
+	VisualScroll.Position = UDim2.new(0, 6, 0, 64)
+	VisualScroll.BackgroundTransparency = 1
+	VisualScroll.BorderSizePixel = 0
+	VisualScroll.CanvasSize = UDim2.new(0, 0, 0, 390)
+	VisualScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	VisualScroll.ScrollBarThickness = 4
+	VisualScroll.ScrollBarImageColor3 = GetTheme().Accent
+	VisualScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+	VisualScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+	VisualScroll.Parent = Content
+
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Visual")
 
-	CreateOption(Content, "Ativar ESP", 70, Settings.EnableESP, function(value)
+	CreateOption(VisualScroll, "Ativar ESP", 6, Settings.EnableESP, function(value)
 		Settings.EnableESP = value
 		if refreshAllESP then task.defer(refreshAllESP) end
 	end)
 
-	CreateOption(Content, "Ativar Box", 132, Settings.EnableBoxes, function(value)
+	CreateOption(VisualScroll, "Ativar Box", 68, Settings.EnableBoxes, function(value)
 		Settings.EnableBoxes = value
 		if refreshAllESP then task.defer(refreshAllESP) end
 	end)
 
-	CreateOption(Content, "Ativar Nomes", 194, Settings.EnableNames, function(value)
+	CreateOption(VisualScroll, "Ativar Nomes", 130, Settings.EnableNames, function(value)
 		Settings.EnableNames = value
 		if refreshAllESP then task.defer(refreshAllESP) end
 	end)
 
-	CreateOption(Content, "Ativar Distancia", 256, Settings.EnableDistance, function(value)
+	CreateOption(VisualScroll, "Ativar Distancia", 192, Settings.EnableDistance, function(value)
 		Settings.EnableDistance = value
 		if refreshAllESP then task.defer(refreshAllESP) end
 	end)
 
-	CreateOption(Content, "Ativar Traços", 318, Settings.EnableTracers, function(value)
+	CreateOption(VisualScroll, "Ativar Traços", 254, Settings.EnableTracers, function(value)
 		Settings.EnableTracers = value
 		if refreshAllESP then task.defer(refreshAllESP) end
 	end)
+
+	-- Espaço inferior para que a última opção não fique colada no limite.
+	local BottomSpace = Instance.new("Frame")
+	BottomSpace.Size = UDim2.new(1, 0, 0, 18)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 316)
+	BottomSpace.BackgroundTransparency = 1
+	BottomSpace.Parent = VisualScroll
 end
 
 function ShowConfigMenu()
 	ClearContent()
-	AddressText.Text = "https://github.com/PAXTAA6767/VORTEXX/configuracao"
+	AddressText.Text = "Vortex/configuração"
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Configuração")
 
@@ -954,9 +1434,245 @@ function ShowConfigMenu()
 
 end
 
+
+--------------------------------------------------
+-- PERFIL
+--------------------------------------------------
+
+local SessionStartedAt = os.clock()
+
+local function getCurrentTeamName()
+	return Player.Team and Player.Team.Name or "Sem equipe"
+end
+
+local function getCurrentVehicleName()
+	local seat = getDrivenVehicleSeat()
+	if not seat then
+		return "Nenhum"
+	end
+
+	local model = seat:FindFirstAncestorOfClass("Model")
+	return model and model.Name or seat.Name
+end
+
+local function getMoneyText()
+	local leaderstats = Player:FindFirstChild("leaderstats")
+	if not leaderstats then
+		return "N/D"
+	end
+
+	for _, name in ipairs({"Money", "Cash", "Dinheiro", "Coins", "Moedas"}) do
+		local value = leaderstats:FindFirstChild(name)
+		if value and (value:IsA("IntValue") or value:IsA("NumberValue")) then
+			local amount = math.floor(value.Value)
+			local formatted = tostring(amount)
+			repeat
+				local changed
+				formatted, changed = formatted:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
+			until changed == 0
+			return formatted
+		end
+	end
+
+	return "N/D"
+end
+
+local function onOff(value)
+	return value and "Ativado" or "Desativado"
+end
+
+function ShowProfileMenu()
+	ClearContent()
+	AddressText.Text = "Vortex / Perfil"
+	CreateBackButton(ShowMainMenu)
+	CreateMenuTitle("Perfil")
+
+	local Scroll = Instance.new("ScrollingFrame")
+	Scroll.Name = "ProfileScroll"
+	Scroll.Size = UDim2.new(1, -12, 1, -64)
+	Scroll.Position = UDim2.new(0, 6, 0, 64)
+	Scroll.BackgroundTransparency = 1
+	Scroll.BorderSizePixel = 0
+	Scroll.CanvasSize = UDim2.new(0, 0, 0, 530)
+	Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	Scroll.ScrollBarThickness = 4
+	Scroll.ScrollBarImageColor3 = GetTheme().Accent
+	Scroll.Parent = Content
+
+	local Header = Instance.new("Frame")
+	Header.Size = UDim2.new(1, -32, 0, 92)
+	Header.Position = UDim2.new(0, 16, 0, 8)
+	Header.BackgroundColor3 = GetTheme().Top
+	Header.BorderSizePixel = 0
+	Header.Parent = Scroll
+
+	local HeaderCorner = Instance.new("UICorner")
+	HeaderCorner.CornerRadius = UDim.new(0, 8)
+	HeaderCorner.Parent = Header
+
+	local Avatar = Instance.new("ImageLabel")
+	Avatar.Size = UDim2.new(0, 64, 0, 64)
+	Avatar.Position = UDim2.new(0, 14, 0.5, -32)
+	Avatar.BackgroundColor3 = GetTheme().Content
+	Avatar.BorderSizePixel = 0
+	Avatar.ScaleType = Enum.ScaleType.Crop
+	Avatar.Parent = Header
+
+	local AvatarCorner = Instance.new("UICorner")
+	AvatarCorner.CornerRadius = UDim.new(1, 0)
+	AvatarCorner.Parent = Avatar
+
+	task.spawn(function()
+		local ok, image = pcall(function()
+			return Players:GetUserThumbnailAsync(
+				Player.UserId,
+				Enum.ThumbnailType.HeadShot,
+				Enum.ThumbnailSize.Size150x150
+			)
+		end)
+		if ok and Avatar.Parent then Avatar.Image = image end
+	end)
+
+	local Display = Instance.new("TextLabel")
+	Display.Size = UDim2.new(1, -100, 0, 30)
+	Display.Position = UDim2.new(0, 92, 0, 17)
+	Display.BackgroundTransparency = 1
+	Display.Text = Player.DisplayName
+	Display.TextColor3 = GetTheme().Accent
+	Display.TextSize = 20
+	Display.Font = Enum.Font.GothamBold
+	Display.TextXAlignment = Enum.TextXAlignment.Left
+	Display.Parent = Header
+
+	local Username = Instance.new("TextLabel")
+	Username.Size = UDim2.new(1, -100, 0, 22)
+	Username.Position = UDim2.new(0, 92, 0, 48)
+	Username.BackgroundTransparency = 1
+	Username.Text = "@" .. Player.Name
+	Username.TextColor3 = Color3.fromRGB(220, 220, 225)
+	Username.TextSize = 14
+	Username.Font = Enum.Font.Gotham
+	Username.TextXAlignment = Enum.TextXAlignment.Left
+	Username.Parent = Header
+
+	local InfoCard = Instance.new("Frame")
+	InfoCard.Size = UDim2.new(1, -32, 0, 180)
+	InfoCard.Position = UDim2.new(0, 16, 0, 112)
+	InfoCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	InfoCard.BorderSizePixel = 0
+	InfoCard.Parent = Scroll
+
+	local InfoCorner = Instance.new("UICorner")
+	InfoCorner.CornerRadius = UDim.new(0, 8)
+	InfoCorner.Parent = InfoCard
+
+	local InfoTitle = Instance.new("TextLabel")
+	InfoTitle.Size = UDim2.new(1, -24, 0, 30)
+	InfoTitle.Position = UDim2.new(0, 12, 0, 8)
+	InfoTitle.BackgroundTransparency = 1
+	InfoTitle.Text = "Informações"
+	InfoTitle.TextColor3 = GetTheme().Accent
+	InfoTitle.TextSize = 16
+	InfoTitle.Font = Enum.Font.GothamBold
+	InfoTitle.TextXAlignment = Enum.TextXAlignment.Left
+	InfoTitle.Parent = InfoCard
+
+	local Info = Instance.new("TextLabel")
+	Info.Size = UDim2.new(1, -32, 1, -46)
+	Info.Position = UDim2.new(0, 16, 0, 40)
+	Info.BackgroundTransparency = 1
+	Info.RichText = true
+	Info.TextColor3 = Color3.fromRGB(215, 215, 220)
+	Info.TextSize = 18
+	Info.Font = Enum.Font.GothamMedium
+	Info.TextXAlignment = Enum.TextXAlignment.Left
+	Info.TextYAlignment = Enum.TextYAlignment.Top
+	Info.Parent = InfoCard
+
+	local VortexCard = Instance.new("Frame")
+	VortexCard.Size = UDim2.new(1, -32, 0, 178)
+	VortexCard.Position = UDim2.new(0, 16, 0, 304)
+	VortexCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	VortexCard.BorderSizePixel = 0
+	VortexCard.Parent = Scroll
+
+	local VortexCorner = Instance.new("UICorner")
+	VortexCorner.CornerRadius = UDim.new(0, 8)
+	VortexCorner.Parent = VortexCard
+
+	local VortexTitle = Instance.new("TextLabel")
+	VortexTitle.Size = UDim2.new(1, -24, 0, 30)
+	VortexTitle.Position = UDim2.new(0, 12, 0, 8)
+	VortexTitle.BackgroundTransparency = 1
+	VortexTitle.Text = "Vortex"
+	VortexTitle.TextColor3 = GetTheme().Accent
+	VortexTitle.TextSize = 16
+	VortexTitle.Font = Enum.Font.GothamBold
+	VortexTitle.TextXAlignment = Enum.TextXAlignment.Left
+	VortexTitle.Parent = VortexCard
+
+	local VortexInfo = Instance.new("TextLabel")
+	VortexInfo.Size = UDim2.new(1, -24, 1, -46)
+	VortexInfo.Position = UDim2.new(0, 12, 0, 40)
+	VortexInfo.BackgroundTransparency = 1
+	VortexInfo.TextColor3 = Color3.fromRGB(215, 215, 220)
+	VortexInfo.TextSize = 18
+	VortexInfo.Font = Enum.Font.GothamMedium
+	VortexInfo.TextXAlignment = Enum.TextXAlignment.Left
+	VortexInfo.TextYAlignment = Enum.TextYAlignment.Top
+	VortexInfo.Parent = VortexCard
+
+	local alive = true
+	Scroll.AncestryChanged:Connect(function(_, parent)
+		if not parent then alive = false end
+	end)
+
+	task.spawn(function()
+		while alive and Scroll.Parent do
+			local elapsed = math.max(0, math.floor(os.clock() - SessionStartedAt))
+			local hours = math.floor(elapsed / 3600)
+			local minutes = math.floor((elapsed % 3600) / 60)
+			local seconds = elapsed % 60
+
+			local pingText = "N/D"
+			pcall(function()
+				pingText = tostring(math.floor(Player:GetNetworkPing() * 1000 + 0.5)) .. " ms"
+			end)
+
+			local teamName = getCurrentTeamName()
+			local teamText = teamName
+			local lowerTeam = string.lower(teamName)
+
+			-- Polícia = azul | Bandido/Robber = vermelho
+			if lowerTeam:find("pol") then
+				teamText = '<font color="rgb(0,170,255)">' .. teamName .. '</font>'
+			elseif lowerTeam:find("band") or lowerTeam:find("rob") then
+				teamText = '<font color="rgb(255,55,55)">' .. teamName .. '</font>'
+			end
+
+			Info.Text =
+				"User ID: " .. tostring(Player.UserId) ..
+				"\nEquipe: " .. teamText ..
+				"\nSessão: " .. string.format("%02dh %02dm %02ds", hours, minutes, seconds) ..
+				"\nDinheiro: " .. getMoneyText() ..
+				"\nPing: " .. pingText
+
+			VortexInfo.Text =
+				"Status: Ativo" ..
+				"\nVersão: v1.0" ..
+				"\nVelocidade do veículo: " .. string.format("%.1fx", Settings.VehicleSpeedMultiplier) ..
+				"\nAimbot: " .. onOff(Settings.Aimbot) ..
+				"\nESP: " .. onOff(Settings.EnableESP) ..
+				"\nDesenvolvido por Vitexx"
+
+			task.wait(1)
+		end
+	end)
+end
+
 function ShowMainMenu()
 	ClearContent()
-	AddressText.Text = "https://github.com/PAXTAA6767/VORTEXX/home"
+	AddressText.Text = "https://github.com/vtx/vortex/home"
 
 	--------------------------------------------------
 	-- CARTÃO DE PERFIL
@@ -1072,9 +1788,7 @@ function ShowMainMenu()
 	local PlayerButton = CreateHomeSquareButton(-147, "rbxassetid://6034287594", "Jogador", ShowPlayerMenu, false)
 	local VisualButton = CreateHomeSquareButton(-73, "rbxassetid://6031075938", "Visual", ShowVisualMenu, false)
 	local ConfigButton = CreateHomeSquareButton(1, "rbxassetid://6031280882", "Configuração", ShowConfigMenu, false)
-	local ProfileButton = CreateHomeSquareButton(75, "", "Perfil", function()
-		Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Perfil</font>'
-	end, true)
+	local ProfileButton = CreateHomeSquareButton(75, "", "Perfil", ShowProfileMenu, true)
 
 	for _, button in ipairs({PlayerButton, VisualButton, ConfigButton, ProfileButton}) do
 		if button then
@@ -1171,7 +1885,7 @@ end
 
 -- Identifica o papel pela equipe.
 -- Prisioneiro = laranja | Polícia = azul | Ladrão = vermelho
-local function getRoleAndColor(plr)
+getRoleAndColor = function(plr)
 	local team = plr.Team
 	local teamName = team and string.lower(team.Name or "") or ""
 
@@ -1248,6 +1962,110 @@ local function getTeamColor(plr)
 	local _, color = getRoleAndColor(plr)
 	return color
 end
+
+--------------------------------------------------
+-- AIMBOT - INIMIGO MAIS PRÓXIMO / CABEÇA
+--------------------------------------------------
+
+local function isAimbotEnemy(localRole, targetRole)
+	if localRole == "Polícia" then
+		return targetRole == "Ladrão"
+	elseif localRole == "Ladrão" then
+		return targetRole == "Polícia"
+	end
+
+	return false
+end
+
+local function getClosestAimbotTarget()
+	local localCharacter = Player.Character
+	local localRoot = getRoot(localCharacter)
+	if not localRoot then
+		return nil
+	end
+
+	local localHumanoid = localCharacter and localCharacter:FindFirstChildOfClass("Humanoid")
+	if not localHumanoid or localHumanoid.Health <= 0 then
+		return nil
+	end
+
+	local localRole = getRoleAndColor(Player)
+	if localRole ~= "Polícia" and localRole ~= "Ladrão" then
+		return nil
+	end
+
+	local closestHead = nil
+	local closestDistance = math.huge
+
+	for _, targetPlayer in ipairs(Players:GetPlayers()) do
+		if targetPlayer ~= Player then
+			local targetRole = getRoleAndColor(targetPlayer)
+
+			if isAimbotEnemy(localRole, targetRole) then
+				local character = targetPlayer.Character
+				local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+				local head = character and character:FindFirstChild("Head")
+				local root = getRoot(character)
+
+				if humanoid and humanoid.Health > 0 and head and root then
+					local camera = workspace.CurrentCamera
+					if camera then
+						-- Só considera o alvo se a cabeça estiver dentro da tela.
+						local viewportPoint, onScreen = camera:WorldToViewportPoint(head.Position)
+
+						if onScreen and viewportPoint.Z > 0 then
+							-- Raycast da câmera até a cabeça para impedir mira através de paredes.
+							local rayParams = RaycastParams.new()
+							rayParams.FilterType = Enum.RaycastFilterType.Exclude
+							rayParams.FilterDescendantsInstances = {Player.Character}
+							rayParams.IgnoreWater = true
+
+							local origin = camera.CFrame.Position
+							local direction = head.Position - origin
+							local result = workspace:Raycast(origin, direction, rayParams)
+
+							-- Visível somente quando o primeiro objeto atingido pertence ao alvo.
+							local visible = result
+								and result.Instance
+								and result.Instance:IsDescendantOf(character)
+
+							if visible then
+								local distance = (root.Position - localRoot.Position).Magnitude
+
+								-- Distância configurável: aproximação de 1 metro ≈ 3.57 studs.
+								local maxDistance = Settings.AimbotDistance * 3.57
+								if distance <= maxDistance and distance < closestDistance then
+									closestDistance = distance
+									closestHead = head
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return closestHead
+end
+
+RunService.RenderStepped:Connect(function()
+	if not Settings.Aimbot then
+		return
+	end
+
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+
+	local targetHead = getClosestAimbotTarget()
+	if not targetHead then
+		return
+	end
+
+	camera.CFrame = CFrame.lookAt(camera.CFrame.Position, targetHead.Position)
+end)
 
 local function updateESP(plr)
 	local existingData = ESP[plr]
