@@ -20,8 +20,6 @@ local Settings = {
 	EnableDistance = true,
 	EnableTracers = false,
 
-	-- Configuração
-	TeamColor = true,
 }
 
 --------------------------------------------------
@@ -422,15 +420,21 @@ function ShowConfigMenu()
 
 	CreateBackButton(ShowMainMenu)
 
-	CreateOption(
-		Content,
-		"Team Colors",
-		70,
-		Settings.TeamColor,
-		function(value)
-			Settings.TeamColor = value
-		end
-	)
+	local Info = Instance.new("TextLabel")
+	Info.Size = UDim2.new(1,-30,0,70)
+	Info.Position = UDim2.new(0,15,0,75)
+	Info.BackgroundColor3 = Color3.fromRGB(48,48,53)
+	Info.BorderSizePixel = 0
+	Info.Text = "Team Colors: automático\nAs cores são definidas pela equipe de cada jogador."
+	Info.TextColor3 = Color3.fromRGB(220,220,225)
+	Info.TextSize = 15
+	Info.Font = Enum.Font.Gotham
+	Info.TextWrapped = true
+	Info.Parent = Content
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0,8)
+	Corner.Parent = Info
 end
 
 --------------------------------------------------
@@ -467,6 +471,15 @@ end
 
 local function getRoot(character)
     return character and character:FindFirstChild("HumanoidRootPart")
+end
+
+-- Cor automática baseada na equipe do jogador.
+local function getTeamColor(plr)
+    if plr.Team then
+        return plr.Team.TeamColor.Color
+    end
+
+    return plr.TeamColor.Color
 end
 
 local function updateESP(plr)
@@ -507,14 +520,23 @@ local function updateESP(plr)
             highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
             highlight.FillTransparency = 0.82
             highlight.OutlineTransparency = 0
-            highlight.FillColor = Color3.fromRGB(70, 150, 235)
-            highlight.OutlineColor = Color3.fromRGB(150, 210, 255)
+            local teamColor = getTeamColor(plr)
+            highlight.FillColor = teamColor
+            highlight.OutlineColor = teamColor:Lerp(Color3.new(1, 1, 1), 0.35)
             highlight.Parent = character
             data.Highlight = highlight
         end
     elseif data.Highlight then
         data.Highlight:Destroy()
         data.Highlight = nil
+    end
+
+    -- Cor da equipe sempre atualizada.
+    local teamColor = getTeamColor(plr)
+
+    if data.Highlight then
+        data.Highlight.FillColor = teamColor
+        data.Highlight.OutlineColor = teamColor:Lerp(Color3.new(1, 1, 1), 0.35)
     end
 
     -- Nome e distância
@@ -532,7 +554,7 @@ local function updateESP(plr)
             local label = Instance.new("TextLabel")
             label.Size = UDim2.fromScale(1, 1)
             label.BackgroundTransparency = 1
-            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.TextColor3 = getTeamColor(plr)
             label.TextStrokeTransparency = 0
             label.TextSize = 14
             label.Font = Enum.Font.GothamBold
@@ -556,6 +578,7 @@ local function updateESP(plr)
         end
 
         data.Label.Text = table.concat(parts, " ")
+        data.Label.TextColor3 = teamColor
     elseif data.Billboard then
         data.Billboard:Destroy()
         data.Billboard = nil
@@ -587,7 +610,8 @@ local function updateESP(plr)
                 beam.FaceCamera = true
                 beam.Width0 = 0.06
                 beam.Width1 = 0.06
-                beam.Color = ColorSequence.new(Color3.fromRGB(90, 170, 255))
+                local teamColor = getTeamColor(plr)
+                beam.Color = ColorSequence.new(teamColor)
                 beam.Transparency = NumberSequence.new(0.15)
                 beam.LightEmission = 1
                 beam.Parent = localRoot
@@ -602,6 +626,10 @@ local function updateESP(plr)
         if data.TracerAttachment then data.TracerAttachment:Destroy() end
         data.Tracer = nil
         data.TracerAttachment = nil
+    end
+
+    if data.Tracer then
+        data.Tracer.Color = ColorSequence.new(teamColor)
     end
 end
 
@@ -631,7 +659,7 @@ for _, plr in ipairs(Players:GetPlayers()) do
     end
 end
 
--- Reaplica configurações dos botões e atualiza distância/novos personagens.
+-- Reaplica configurações dos botões, cores de equipe, distância e novos personagens.
 task.spawn(function()
     while task.wait(0.25) do
         refreshAllESP()
