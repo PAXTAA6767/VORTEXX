@@ -9,9 +9,6 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 --------------------------------------------------
 
 local Settings = {
-	-- Jogador
-	EnableSelf = false,
-
 	-- Visual
 	EnableESP = true,
 	EnableBoxes = true,
@@ -126,3 +123,6 @@ ContentCorner.Parent = Content
 --------------------------------------------------
 -- FUNÇÃO PARA LIMPAR CONTEÚDO
 --------------------------------------------------
+
+local function ClearContent()
+	for _, object in ipairs(Content:GetChildren()) do
