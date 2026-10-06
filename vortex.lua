@@ -10,10 +10,10 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 
 local Settings = {
 	-- Visual
-	EnableESP = true,
-	EnableBoxes = true,
-	EnableNames = true,
-	EnableDistance = true,
+	EnableESP = false,
+	EnableBoxes = false,
+	EnableNames = false,
+	EnableDistance = false,
 	EnableTracers = false,
 
 }
