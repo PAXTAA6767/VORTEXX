@@ -14,10 +14,10 @@ local Settings = {
 	NoWait = false,
 
 	-- Visual
-	EnableESP = false,
-	EnableBoxes = false,
-	EnableNames = false,
-	EnableDistance = false,
+	EnableESP = true,
+	EnableBoxes = true,
+	EnableNames = true,
+	EnableDistance = true,
 	EnableTracers = false,
 
 }
@@ -25,44 +25,67 @@ local Settings = {
 -- Será definido na parte do ESP; permite que os toggles atualizem imediatamente.
 local refreshAllESP
 
+
 --------------------------------------------------
--- NO WAIT - PARA INTERAÇÕES COM PROXIMITYPROMPT NO SEU JOGO
+-- NO WAIT - INTERAÇÕES DO PRÓPRIO JOGO
 --------------------------------------------------
 
-local OriginalPromptHoldDuration = setmetatable({}, {__mode = "k"})
+local OriginalHoldDurations = {}
+local NoWaitPromptConnections = {}
 
-local function setPromptNoWait(prompt, enabled)
-	if not prompt:IsA("ProximityPrompt") then return end
+local function registerPrompt(prompt)
+	if not prompt:IsA("ProximityPrompt") then
+		return
+	end
 
-	if enabled then
-		if OriginalPromptHoldDuration[prompt] == nil then
-			OriginalPromptHoldDuration[prompt] = prompt.HoldDuration
-		end
+	if OriginalHoldDurations[prompt] == nil then
+		OriginalHoldDurations[prompt] = prompt.HoldDuration
+	end
+
+	if Settings.NoWait then
 		prompt.HoldDuration = 0
-	else
-		local original = OriginalPromptHoldDuration[prompt]
-		if original ~= nil then
-			prompt.HoldDuration = original
-			OriginalPromptHoldDuration[prompt] = nil
+	end
+
+	if not NoWaitPromptConnections[prompt] then
+		NoWaitPromptConnections[prompt] = prompt.Destroying:Connect(function()
+			OriginalHoldDurations[prompt] = nil
+
+			if NoWaitPromptConnections[prompt] then
+				NoWaitPromptConnections[prompt]:Disconnect()
+				NoWaitPromptConnections[prompt] = nil
+			end
+		end)
+	end
+end
+
+local function setNoWait(enabled)
+	Settings.NoWait = enabled
+
+	for _, object in ipairs(Workspace:GetDescendants()) do
+		if object:IsA("ProximityPrompt") then
+			registerPrompt(object)
+
+			if enabled then
+				object.HoldDuration = 0
+			else
+				local original = OriginalHoldDurations[object]
+				if original ~= nil then
+					object.HoldDuration = original
+				end
+			end
 		end
 	end
 end
 
-local function applyNoWait(enabled)
-	for _, object in ipairs(Workspace:GetDescendants()) do
-		if object:IsA("ProximityPrompt") then
-			setPromptNoWait(object, enabled)
-		end
+for _, object in ipairs(Workspace:GetDescendants()) do
+	if object:IsA("ProximityPrompt") then
+		registerPrompt(object)
 	end
 end
 
 Workspace.DescendantAdded:Connect(function(object)
-	if Settings.NoWait and object:IsA("ProximityPrompt") then
-		task.defer(function()
-			if object.Parent then
-				setPromptNoWait(object, true)
-			end
-		end)
+	if object:IsA("ProximityPrompt") then
+		registerPrompt(object)
 	end
 end)
 
@@ -392,10 +415,55 @@ function ShowPlayerMenu()
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Jogador")
 
-	CreateOption(Content, "No Wait", 70, Settings.NoWait, function(value)
-		Settings.NoWait = value
-		applyNoWait(value)
+	local NoWaitButton = Instance.new("TextButton")
+	NoWaitButton.Size = UDim2.new(1, -32, 0, 62)
+	NoWaitButton.Position = UDim2.new(0, 16, 0, 82)
+	NoWaitButton.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	NoWaitButton.BorderSizePixel = 0
+	NoWaitButton.Text = ""
+	NoWaitButton.AutoButtonColor = false
+	NoWaitButton.Parent = Content
+
+	local NoWaitCorner = Instance.new("UICorner")
+	NoWaitCorner.CornerRadius = UDim.new(0, 8)
+	NoWaitCorner.Parent = NoWaitButton
+
+	local NoWaitLabel = Instance.new("TextLabel")
+	NoWaitLabel.Size = UDim2.new(1, -90, 1, 0)
+	NoWaitLabel.Position = UDim2.new(0, 16, 0, 0)
+	NoWaitLabel.BackgroundTransparency = 1
+	NoWaitLabel.Text = "No Wait"
+	NoWaitLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
+	NoWaitLabel.TextSize = 18
+	NoWaitLabel.Font = Enum.Font.Gotham
+	NoWaitLabel.TextXAlignment = Enum.TextXAlignment.Left
+	NoWaitLabel.Parent = NoWaitButton
+
+	local NoWaitIcon = Instance.new("TextLabel")
+	NoWaitIcon.Size = UDim2.new(0, 55, 1, 0)
+	NoWaitIcon.Position = UDim2.new(1, -66, 0, 0)
+	NoWaitIcon.BackgroundTransparency = 1
+	NoWaitIcon.Text = "☝"
+	NoWaitIcon.TextSize = 28
+	NoWaitIcon.Font = Enum.Font.Gotham
+	NoWaitIcon.Parent = NoWaitButton
+
+	local function updateNoWaitVisual()
+		if Settings.NoWait then
+			NoWaitIcon.TextColor3 = Color3.fromRGB(70, 150, 210)
+			NoWaitButton.BackgroundColor3 = Color3.fromRGB(50, 51, 57)
+		else
+			NoWaitIcon.TextColor3 = Color3.fromRGB(120, 125, 132)
+			NoWaitButton.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+		end
+	end
+
+	NoWaitButton.Activated:Connect(function()
+		setNoWait(not Settings.NoWait)
+		updateNoWaitVisual()
 	end)
+
+	updateNoWaitVisual()
 end
 
 function ShowVisualMenu()
