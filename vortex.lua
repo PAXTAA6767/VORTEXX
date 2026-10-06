@@ -824,8 +824,15 @@ function ShowPlayerMenu()
 
 		if clean ~= "" then
 			local value = tonumber(clean)
-			if value and value > 200 then
-				WalkInput.Text = "200"
+			if value then
+				value = math.clamp(math.floor(value + 0.5), 0, 200)
+
+				if tostring(value) ~= WalkInput.Text then
+					WalkInput.Text = tostring(value)
+				end
+
+				-- Salva e aplica imediatamente, sem precisar clicar fora do campo.
+				setWalkSpeedBoost(value)
 			end
 		end
 	end)
