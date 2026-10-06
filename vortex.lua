@@ -21,7 +21,6 @@ local Settings = {
 	GodMode = false,
 	Aimbot = false,
 	AimbotDistance = 100,
-	VehicleSpeedMultiplier = 1.0,
 
 	-- Interface
 	ToggleKey = Enum.KeyCode.K,
@@ -163,104 +162,6 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
---------------------------------------------------
--- VELOCIDADE DO VEÍCULO - ATÉ 10X
--- Funciona com veículos baseados em VehicleSeat.
---------------------------------------------------
-
-local CurrentVehicleSeat = nil
-local OriginalVehicleMaxSpeed = nil
-
-local function getDrivenVehicleSeat()
-	local character = Player.Character
-	if not character then return nil end
-
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return nil end
-
-	local seat = humanoid.SeatPart
-	if seat and seat:IsA("VehicleSeat") then
-		return seat
-	end
-
-	return nil
-end
-
-local function restoreVehicleSpeed()
-	if CurrentVehicleSeat and CurrentVehicleSeat.Parent and OriginalVehicleMaxSpeed then
-		CurrentVehicleSeat.MaxSpeed = OriginalVehicleMaxSpeed
-	end
-
-	CurrentVehicleSeat = nil
-	OriginalVehicleMaxSpeed = nil
-end
-
-local function applyVehicleSpeed()
-	local seat = getDrivenVehicleSeat()
-
-	if not seat then
-		restoreVehicleSpeed()
-		return
-	end
-
-	if CurrentVehicleSeat ~= seat then
-		restoreVehicleSpeed()
-		CurrentVehicleSeat = seat
-		OriginalVehicleMaxSpeed = seat.MaxSpeed
-	end
-
-	if not OriginalVehicleMaxSpeed then
-		return
-	end
-
-	seat.MaxSpeed = OriginalVehicleMaxSpeed * Settings.VehicleSpeedMultiplier
-
-	-- Reforço perceptível: aumenta também a velocidade horizontal real
-	-- do conjunto do veículo quando ele já estiver em movimento.
-	if Settings.VehicleSpeedMultiplier > 1 then
-		local assembly = seat.AssemblyRootPart or seat
-		local character = Player.Character
-
-		-- Nunca acelera uma peça pertencente ao personagem.
-		if character and assembly:IsDescendantOf(character) then
-			return
-		end
-
-		local velocity = assembly.AssemblyLinearVelocity
-		local horizontal = Vector3.new(velocity.X, 0, velocity.Z)
-
-		if horizontal.Magnitude > 1 then
-			local baseLimit = math.max(OriginalVehicleMaxSpeed, 1)
-			local targetSpeed = baseLimit * Settings.VehicleSpeedMultiplier
-			local boostedSpeed = math.min(horizontal.Magnitude * 1.035, targetSpeed)
-			local direction = horizontal.Unit
-
-			assembly.AssemblyLinearVelocity = Vector3.new(
-				direction.X * boostedSpeed,
-				velocity.Y,
-				direction.Z * boostedSpeed
-			)
-		end
-	end
-end
-
-local function setVehicleSpeedMultiplier(value)
-	value = tonumber(value) or 1
-	value = math.clamp(value, 1, 10)
-
-	-- Duas casas no máximo.
-	value = math.floor(value * 100 + 0.5) / 100
-	Settings.VehicleSpeedMultiplier = value
-	applyVehicleSpeed()
-
-	return value
-end
-
-RunService.Heartbeat:Connect(function()
-	applyVehicleSpeed()
-end)
-
---------------------------------------------------
 -- GOD MODE - JOGADOR
 --------------------------------------------------
 
@@ -1066,74 +967,9 @@ function ShowPlayerMenu()
 	DistanceHint.TextXAlignment = Enum.TextXAlignment.Left
 	DistanceHint.Parent = PlayerScroll
 
-	local VehicleSpeedCard = Instance.new("Frame")
-	VehicleSpeedCard.Size = UDim2.new(1, -32, 0, 58)
-	VehicleSpeedCard.Position = UDim2.new(0, 16, 0, 496)
-	VehicleSpeedCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
-	VehicleSpeedCard.BorderSizePixel = 0
-	VehicleSpeedCard.Parent = PlayerScroll
-
-	local VehicleSpeedCorner = Instance.new("UICorner")
-	VehicleSpeedCorner.CornerRadius = UDim.new(0, 8)
-	VehicleSpeedCorner.Parent = VehicleSpeedCard
-
-	local VehicleSpeedLabel = Instance.new("TextLabel")
-	VehicleSpeedLabel.Size = UDim2.new(1, -230, 1, 0)
-	VehicleSpeedLabel.Position = UDim2.new(0, 16, 0, 0)
-	VehicleSpeedLabel.BackgroundTransparency = 1
-	VehicleSpeedLabel.Text = "Velocidade do Veículo"
-	VehicleSpeedLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
-	VehicleSpeedLabel.TextSize = 17
-	VehicleSpeedLabel.Font = Enum.Font.Gotham
-	VehicleSpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-	VehicleSpeedLabel.Parent = VehicleSpeedCard
-
-	local VehicleSpeedInput = Instance.new("TextBox")
-	VehicleSpeedInput.Size = UDim2.new(0, 142, 0, 34)
-	VehicleSpeedInput.Position = UDim2.new(1, -158, 0.5, -17)
-	VehicleSpeedInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
-	VehicleSpeedInput.BorderSizePixel = 0
-	VehicleSpeedInput.Text = string.format("%.1fx", Settings.VehicleSpeedMultiplier)
-	VehicleSpeedInput.PlaceholderText = "1.0 - 10.0x"
-	VehicleSpeedInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
-	VehicleSpeedInput.TextColor3 = Color3.fromRGB(220, 220, 225)
-	VehicleSpeedInput.TextSize = 14
-	VehicleSpeedInput.Font = Enum.Font.Gotham
-	VehicleSpeedInput.ClearTextOnFocus = false
-	VehicleSpeedInput.Parent = VehicleSpeedCard
-
-	local VehicleSpeedStroke = Instance.new("UIStroke")
-	VehicleSpeedStroke.Thickness = 1.5
-	VehicleSpeedStroke.Color = GetTheme().Accent
-	VehicleSpeedStroke.Parent = VehicleSpeedInput
-
-	local VehicleSpeedInputCorner = Instance.new("UICorner")
-	VehicleSpeedInputCorner.CornerRadius = UDim.new(0, 8)
-	VehicleSpeedInputCorner.Parent = VehicleSpeedInput
-
-	local VehicleSpeedHint = Instance.new("TextLabel")
-	VehicleSpeedHint.Size = UDim2.new(1, -32, 0, 22)
-	VehicleSpeedHint.Position = UDim2.new(0, 16, 0, 559)
-	VehicleSpeedHint.BackgroundTransparency = 1
-	VehicleSpeedHint.Text = "1.0x = normal  •  máximo = 10.0x"
-	VehicleSpeedHint.TextColor3 = Color3.fromRGB(125, 125, 132)
-	VehicleSpeedHint.TextSize = 12
-	VehicleSpeedHint.Font = Enum.Font.Gotham
-	VehicleSpeedHint.TextXAlignment = Enum.TextXAlignment.Left
-	VehicleSpeedHint.Parent = PlayerScroll
-
-	local function applyVehicleSpeedInput()
-		local raw = VehicleSpeedInput.Text:gsub(",", "."):gsub("[^%d%.]", "")
-		local value = tonumber(raw) or Settings.VehicleSpeedMultiplier
-		value = setVehicleSpeedMultiplier(value)
-		VehicleSpeedInput.Text = string.format("%.1fx", value)
-	end
-
-	VehicleSpeedInput.FocusLost:Connect(applyVehicleSpeedInput)
-
 	local BottomSpace = Instance.new("Frame")
 	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
-	BottomSpace.Position = UDim2.new(0, 0, 0, 592)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 496)
 	BottomSpace.BackgroundTransparency = 1
 	BottomSpace.Parent = PlayerScroll
 
@@ -1445,15 +1281,6 @@ local function getCurrentTeamName()
 	return Player.Team and Player.Team.Name or "Sem equipe"
 end
 
-local function getCurrentVehicleName()
-	local seat = getDrivenVehicleSeat()
-	if not seat then
-		return "Nenhum"
-	end
-
-	local model = seat:FindFirstAncestorOfClass("Model")
-	return model and model.Name or seat.Name
-end
 
 local function getMoneyText()
 	local leaderstats = Player:FindFirstChild("leaderstats")
@@ -1660,7 +1487,6 @@ function ShowProfileMenu()
 			VortexInfo.Text =
 				"Status: Ativo" ..
 				"\nVersão: v1.0" ..
-				"\nVelocidade do veículo: " .. string.format("%.1fx", Settings.VehicleSpeedMultiplier) ..
 				"\nAimbot: " .. onOff(Settings.Aimbot) ..
 				"\nESP: " .. onOff(Settings.EnableESP) ..
 				"\nDesenvolvido por Vitexx"
