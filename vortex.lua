@@ -456,6 +456,12 @@ local function destroyESP(plr)
     if data.Tracer then data.Tracer:Destroy() end
     if data.TracerAttachment then data.TracerAttachment:Destroy() end
 
+    if data.Humanoid and data.OriginalDisplayDistanceType then
+        pcall(function()
+            data.Humanoid.DisplayDistanceType = data.OriginalDisplayDistanceType
+        end)
+    end
+
     ESP[plr] = nil
 end
 
@@ -577,17 +583,15 @@ local function getTeamColor(plr)
 end
 
 local function updateESP(plr)
-
-    -- VORTEX_NAME_TOGGLE_FIX:
-    -- remove somente o texto criado pelo Vortex; não altera o Humanoid.
-    local currentData = ESP[plr]
-    if currentData and not Settings.EnableNames and not Settings.EnableDistance then
-        if currentData.Billboard then
-            currentData.Billboard:Destroy()
-            currentData.Billboard = nil
-            currentData.Label = nil
+    local existingData = ESP[plr]
+    if existingData and not Settings.EnableNames and not Settings.EnableDistance then
+        if existingData.Billboard then
+            existingData.Billboard:Destroy()
+            existingData.Billboard = nil
+            existingData.Label = nil
         end
     end
+
     if plr == Player then
         destroyESP(plr)
         return
@@ -620,6 +624,19 @@ local function updateESP(plr)
         destroyESP(plr)
         data = {Character = character}
         ESP[plr] = data
+
+        -- Oculta o nome padrão do Roblox para que Enable Names controle
+        -- sozinho se o nome aparece ou não.
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            data.Humanoid = humanoid
+            data.OriginalDisplayDistanceType = humanoid.DisplayDistanceType
+            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+        end
+    end
+
+    if data.Humanoid then
+        data.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
     end
 
     -- Caixa/contorno
