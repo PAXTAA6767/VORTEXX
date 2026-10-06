@@ -9,9 +9,6 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 --------------------------------------------------
 
 local Settings = {
-	-- Jogador
-	EnableSelf = false,
-
 	-- Visual
 	EnableESP = true,
 	EnableBoxes = true,
@@ -331,15 +328,6 @@ function ShowPlayerMenu()
 
 	CreateBackButton(ShowMainMenu)
 
-	CreateOption(
-		Content,
-		"Enable Self",
-		70,
-		Settings.EnableSelf,
-		function(value)
-			Settings.EnableSelf = value
-		end
-	)
 end
 
 --------------------------------------------------
@@ -590,9 +578,7 @@ end
 
 local function updateESP(plr)
     if plr == Player then
-        if not Settings.EnableSelf then
-            destroyESP(plr)
-        end
+        destroyESP(plr)
         return
     end
 
