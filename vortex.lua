@@ -10,7 +10,6 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 
 local Settings = {
 	-- Jogador
-	EnablePlayers = true,
 	EnableSelf = false,
 
 	-- Visual
@@ -326,18 +325,8 @@ function ShowPlayerMenu()
 
 	CreateOption(
 		Content,
-		"Enable Players",
-		70,
-		Settings.EnablePlayers,
-		function(value)
-			Settings.EnablePlayers = value
-		end
-	)
-
-	CreateOption(
-		Content,
 		"Enable Self",
-		135,
+		70,
 		Settings.EnableSelf,
 		function(value)
 			Settings.EnableSelf = value
@@ -594,7 +583,7 @@ local function updateESP(plr)
         return
     end
 
-    if not Settings.EnableESP or not Settings.EnablePlayers then
+    if not Settings.EnableESP then
         destroyESP(plr)
         return
     end
@@ -801,7 +790,7 @@ Player.CharacterAdded:Connect(function(character)
     refreshAllESP()
 end)
 
--- Reaplica configurações dos botões, cores de equipe, distância e novos personagens.
+-- Reaplica configurações do ESP, cores de equipe, distância e novos personagens.
 task.spawn(function()
     while task.wait(0.25) do
         refreshAllESP()
