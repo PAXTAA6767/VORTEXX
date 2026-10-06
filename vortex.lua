@@ -51,6 +51,7 @@ local getRoleAndColor
 --------------------------------------------------
 
 local FollowTarget = nil
+local FollowPauseUntil = 0
 
 local function setFollowTarget(targetPlayer)
 	if targetPlayer == Player then
@@ -64,6 +65,20 @@ local function stopFollowing()
 	FollowTarget = nil
 	Settings.FollowPlayer = false
 end
+
+-- Dá uma pequena janela para interações/combate sem o TP reposicionar
+-- o personagem a cada frame.
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed or not Settings.FollowPlayer then return end
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch
+		or input.KeyCode == Enum.KeyCode.E
+		or input.KeyCode == Enum.KeyCode.F then
+		FollowPauseUntil = os.clock() + 0.45
+	end
+end)
+
 
 RunService.Heartbeat:Connect(function()
 	local target = FollowTarget
@@ -82,12 +97,16 @@ RunService.Heartbeat:Connect(function()
 		return
 	end
 
-	-- Segue como TP, ficando bem perto e atrás do jogador selecionado.
-	-- Offset local: 3 studs atrás do alvo.
-	local followOffset = CFrame.new(0, 0, 3)
+	-- Durante uma interação, deixa o personagem parado por alguns instantes.
+	if os.clock() < FollowPauseUntil then
+		return
+	end
+
+	-- Mantém você perto, mas sem ficar exatamente dentro do outro personagem.
+	-- 2.5 studs atrás costuma deixar as interações mais estáveis.
+	local followOffset = CFrame.new(0, 0, 2.5)
 	local desiredCFrame = targetRoot.CFrame * followOffset
 
-	-- Move o personagem inteiro para acompanhar imediatamente o alvo.
 	character:PivotTo(desiredCFrame)
 	root.AssemblyLinearVelocity = Vector3.zero
 	root.AssemblyAngularVelocity = Vector3.zero
@@ -826,7 +845,7 @@ function ShowPlayerMenu()
 
 					-- TP imediato assim que o jogador é escolhido.
 					if myCharacter and targetRoot then
-						myCharacter:PivotTo(targetRoot.CFrame * CFrame.new(0, 0, 3))
+						myCharacter:PivotTo(targetRoot.CFrame * CFrame.new(0, 0, 2.5))
 					end
 
 					setFollowTarget(targetPlayer)
