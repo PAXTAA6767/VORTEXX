@@ -29,7 +29,7 @@ local Settings = {
 --------------------------------------------------
 
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "VitexxPanel"
+Gui.Name = "VortexPanel"
 Gui.ResetOnSpawn = false
 Gui.Parent = PlayerGui
 
@@ -67,7 +67,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -60, 1, 0)
 Title.Position = UDim2.new(0, 18, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "☾  Chaos"
+Title.Text = "☾  Vortex"
 Title.TextColor3 = Color3.fromRGB(225,225,225)
 Title.TextSize = 15
 Title.Font = Enum.Font.Gotham
@@ -84,7 +84,7 @@ Close.TextSize = 25
 Close.Font = Enum.Font.Gotham
 Close.Parent = Top
 
-Close.MouseButton1Click:Connect(function()
+Close.Activated:Connect(function()
 	Main.Visible = false
 end)
 
@@ -239,7 +239,7 @@ local function CreateBackButton(callback)
 	Corner.CornerRadius = UDim.new(0,7)
 	Corner.Parent = Back
 
-	Back.MouseButton1Click:Connect(callback)
+	Back.Activated:Connect(callback)
 end
 
 --------------------------------------------------
@@ -283,7 +283,7 @@ local function ShowMainMenu()
 	P.CornerRadius = UDim.new(0,8)
 	P.Parent = PlayerButton
 
-	PlayerButton.MouseButton1Click:Connect(function()
+	PlayerButton.Activated:Connect(function()
 		ShowPlayerMenu()
 	end)
 
@@ -296,7 +296,7 @@ local function ShowMainMenu()
 	VisualButton.Text = "👁   Visual"
 	VisualButton.Parent = Content
 
-	VisualButton.MouseButton1Click:Connect(function()
+	VisualButton.Activated:Connect(function()
 		ShowVisualMenu()
 	end)
 
@@ -309,7 +309,7 @@ local function ShowMainMenu()
 	ConfigButton.Text = "⚙   Configuração"
 	ConfigButton.Parent = Content
 
-	ConfigButton.MouseButton1Click:Connect(function()
+	ConfigButton.Activated:Connect(function()
 		ShowConfigMenu()
 	end)
 end
@@ -438,20 +438,207 @@ end
 --------------------------------------------------
 
 UserInputService.InputBegan:Connect(function(input, processed)
-
-	if processed then
-		return
-	end
-
-	if input.KeyCode == Enum.KeyCode.K then
-
-		Main.Visible = not Main.Visible
-
-		if Main.Visible then
-			ShowMainMenu()
-		end
-	end
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.K then
+        Main.Visible = not Main.Visible
+        if Main.Visible then
+            ShowMainMenu()
+        end
+    end
 end)
+
+--------------------------------------------------
+-- VORTEX ESP - PARA O SEU PRÓPRIO JOGO
+--------------------------------------------------
+
+local ESP = {}
+
+local function destroyESP(plr)
+    local data = ESP[plr]
+    if not data then return end
+
+    if data.Highlight then data.Highlight:Destroy() end
+    if data.Billboard then data.Billboard:Destroy() end
+    if data.Tracer then data.Tracer:Destroy() end
+    if data.TracerAttachment then data.TracerAttachment:Destroy() end
+
+    ESP[plr] = nil
+end
+
+local function getRoot(character)
+    return character and character:FindFirstChild("HumanoidRootPart")
+end
+
+local function updateESP(plr)
+    if plr == Player then
+        if not Settings.EnableSelf then
+            destroyESP(plr)
+        end
+        return
+    end
+
+    if not Settings.EnableESP or not Settings.EnablePlayers then
+        destroyESP(plr)
+        return
+    end
+
+    local character = plr.Character
+    local root = getRoot(character)
+
+    if not character or not root then
+        destroyESP(plr)
+        return
+    end
+
+    local data = ESP[plr]
+
+    if not data or data.Character ~= character then
+        destroyESP(plr)
+        data = {Character = character}
+        ESP[plr] = data
+    end
+
+    -- Caixa/contorno
+    if Settings.EnableBoxes then
+        if not data.Highlight then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "VortexESP"
+            highlight.Adornee = character
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            highlight.FillTransparency = 0.82
+            highlight.OutlineTransparency = 0
+            highlight.FillColor = Color3.fromRGB(70, 150, 235)
+            highlight.OutlineColor = Color3.fromRGB(150, 210, 255)
+            highlight.Parent = character
+            data.Highlight = highlight
+        end
+    elseif data.Highlight then
+        data.Highlight:Destroy()
+        data.Highlight = nil
+    end
+
+    -- Nome e distância
+    if Settings.EnableNames or Settings.EnableDistance then
+        if not data.Billboard then
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "VortexInfo"
+            billboard.Adornee = root
+            billboard.Size = UDim2.fromOffset(220, 40)
+            billboard.StudsOffset = Vector3.new(0, 3.7, 0)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = root
+            data.Billboard = billboard
+
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.fromScale(1, 1)
+            label.BackgroundTransparency = 1
+            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.TextStrokeTransparency = 0
+            label.TextSize = 14
+            label.Font = Enum.Font.GothamBold
+            label.Parent = billboard
+            data.Label = label
+        end
+
+        local parts = {}
+
+        if Settings.EnableNames then
+            table.insert(parts, plr.Name)
+        end
+
+        if Settings.EnableDistance then
+            local localCharacter = Player.Character
+            local localRoot = getRoot(localCharacter)
+            if localRoot then
+                local distance = (localRoot.Position - root.Position).Magnitude
+                table.insert(parts, string.format("[%dm]", math.floor(distance + 0.5)))
+            end
+        end
+
+        data.Label.Text = table.concat(parts, " ")
+    elseif data.Billboard then
+        data.Billboard:Destroy()
+        data.Billboard = nil
+        data.Label = nil
+    end
+
+    -- Tracer visual simples para o seu próprio jogo
+    if Settings.EnableTracers then
+        if not data.Tracer then
+            local attachment = Instance.new("Attachment")
+            attachment.Name = "VortexTracerAttachment"
+            attachment.Parent = root
+
+            local localCharacter = Player.Character
+            local localRoot = getRoot(localCharacter)
+
+            if localRoot then
+                local fromAttachment = localRoot:FindFirstChild("VortexTracerOrigin")
+                if not fromAttachment then
+                    fromAttachment = Instance.new("Attachment")
+                    fromAttachment.Name = "VortexTracerOrigin"
+                    fromAttachment.Parent = localRoot
+                end
+
+                local beam = Instance.new("Beam")
+                beam.Name = "VortexTracer"
+                beam.Attachment0 = fromAttachment
+                beam.Attachment1 = attachment
+                beam.FaceCamera = true
+                beam.Width0 = 0.06
+                beam.Width1 = 0.06
+                beam.Color = ColorSequence.new(Color3.fromRGB(90, 170, 255))
+                beam.Transparency = NumberSequence.new(0.15)
+                beam.LightEmission = 1
+                beam.Parent = localRoot
+                data.Tracer = beam
+                data.TracerAttachment = attachment
+            else
+                attachment:Destroy()
+            end
+        end
+    elseif data.Tracer or data.TracerAttachment then
+        if data.Tracer then data.Tracer:Destroy() end
+        if data.TracerAttachment then data.TracerAttachment:Destroy() end
+        data.Tracer = nil
+        data.TracerAttachment = nil
+    end
+end
+
+local function refreshAllESP()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        updateESP(plr)
+    end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        task.wait(0.4)
+        updateESP(plr)
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+    destroyESP(plr)
+end)
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr ~= Player then
+        plr.CharacterAdded:Connect(function()
+            task.wait(0.4)
+            updateESP(plr)
+        end)
+    end
+end
+
+-- Reaplica configurações dos botões e atualiza distância/novos personagens.
+task.spawn(function()
+    while task.wait(0.25) do
+        refreshAllESP()
+    end
+end)
+
+refreshAllESP()
 
 --------------------------------------------------
 -- ARRASTAR PAINEL
