@@ -96,8 +96,11 @@ RunService.Heartbeat:Connect(function()
 	if Settings.WalkSpeedBoost <= 0 then return end
 
 	local humanoid = getHumanoid()
-	if humanoid and not humanoid.SeatPart then
-		applyWalkSpeed()
+	if humanoid and humanoid.Health > 0 and not humanoid.SeatPart then
+		local targetSpeed = DEFAULT_WALK_SPEED + Settings.WalkSpeedBoost
+		if humanoid.WalkSpeed ~= targetSpeed then
+			humanoid.WalkSpeed = targetSpeed
+		end
 	end
 end)
 
@@ -967,8 +970,14 @@ function ShowPlayerMenu()
 
 		if clean ~= "" then
 			local value = tonumber(clean)
-			if value and value > 200 then
-				WalkInput.Text = "200"
+			if value then
+				if value > 200 then
+					value = 200
+					WalkInput.Text = "200"
+				end
+
+				-- Aplica imediatamente enquanto o valor é digitado.
+				setWalkSpeedBoost(value)
 			end
 		end
 	end)
