@@ -120,7 +120,7 @@ local function stopFollowing()
 	-- Guarda a posição atual antes de desligar o acompanhamento.
 	local character = Player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("Head")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
 
 	FollowTarget = nil
 	Settings.FollowPlayer = false
@@ -158,8 +158,8 @@ RunService.Heartbeat:Connect(function()
 	local character = Player.Character
 	local targetCharacter = target.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("Head")
-	local targetRoot = targetCharacter and targetCharacter:FindFirstChild("Head")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local targetRoot = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
 	local targetHumanoid = targetCharacter and targetCharacter:FindFirstChildOfClass("Humanoid")
 
 	if not humanoid or not root or not targetRoot or not targetHumanoid or targetHumanoid.Health <= 0 then
@@ -729,19 +729,6 @@ end
 -- TELAS
 --------------------------------------------------
 
--- Aimbot: ponto de mira fixo na cabeça do alvo.
-local function getAimbotHead(targetPlayer)
-	local character = targetPlayer and targetPlayer.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local head = character and character:FindFirstChild("Head")
-
-	if humanoid and humanoid.Health > 0 and head then
-		return head
-	end
-
-	return nil
-end
-
 function ShowPlayerMenu()
 	ClearContent()
 	AddressText.Text = "Vortex / Player"
@@ -755,7 +742,7 @@ function ShowPlayerMenu()
 	PlayerScroll.Position = UDim2.new(0, 6, 0, 64)
 	PlayerScroll.BackgroundTransparency = 1
 	PlayerScroll.BorderSizePixel = 0
-	PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 390)
+	PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 430)
 	PlayerScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	PlayerScroll.ScrollBarThickness = 4
 	PlayerScroll.ScrollBarImageColor3 = GetTheme().Accent
@@ -918,7 +905,64 @@ function ShowPlayerMenu()
 	DistanceHint.Parent = PlayerScroll
 
 
-	
+	local BottomSpace = Instance.new("Frame")
+	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 406)
+	BottomSpace.BackgroundTransparency = 1
+	BottomSpace.Parent = PlayerScroll
+
+	local function applyAimbotDistance()
+		local raw = DistanceInput.Text:gsub("[^%d]", "")
+		local value = tonumber(raw) or Settings.AimbotDistance
+		value = math.clamp(math.floor(value + 0.5), 1, 200)
+		Settings.AimbotDistance = value
+		DistanceInput.Text = tostring(value)
+	end
+
+	DistanceInput.FocusLost:Connect(applyAimbotDistance)
+
+	DistanceInput:GetPropertyChangedSignal("Text"):Connect(function()
+		local clean = DistanceInput.Text:gsub("[^%d]", "")
+		if clean ~= DistanceInput.Text then
+			DistanceInput.Text = clean
+			return
+		end
+
+		if clean ~= "" then
+			local value = tonumber(clean)
+			if value and value > 200 then
+				DistanceInput.Text = "200"
+			end
+		end
+	end)
+
+	local function applyInput()
+		local raw = WalkInput.Text:gsub("[^%d]", "")
+		local value = tonumber(raw) or 0
+		value = setWalkSpeedBoost(value)
+		WalkInput.Text = tostring(value)
+	end
+
+	WalkInput.FocusLost:Connect(function()
+		applyInput()
+	end)
+
+	WalkInput:GetPropertyChangedSignal("Text"):Connect(function()
+		local clean = WalkInput.Text:gsub("[^%d]", "")
+
+		if clean ~= WalkInput.Text then
+			WalkInput.Text = clean
+			return
+		end
+
+		if clean ~= "" then
+			local value = tonumber(clean)
+			if value and value > 200 then
+				WalkInput.Text = "200"
+			end
+		end
+	end)
+end
 
 function ShowVisualMenu()
 	ClearContent()
@@ -1751,7 +1795,7 @@ local function destroyESP(plr)
 end
 
 local function getRoot(character)
-	return character and character:FindFirstChild("Head")
+	return character and character:FindFirstChild("HumanoidRootPart")
 end
 
 local function darkTeamColor(color)
@@ -1952,7 +1996,6 @@ local function getClosestAimbotTarget()
 
 	return closestHead
 end
-
 
 
 --------------------------------------------------
