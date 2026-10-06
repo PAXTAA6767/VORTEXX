@@ -9,6 +9,9 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 --------------------------------------------------
 
 local Settings = {
+	-- Jogador
+	WalkSpeedBoost = 0,
+
 	-- Visual
 	EnableESP = false,
 	EnableBoxes = false,
@@ -20,6 +23,62 @@ local Settings = {
 
 -- Será definido na parte do ESP; permite que os toggles atualizem imediatamente.
 local refreshAllESP
+
+
+--------------------------------------------------
+-- WALK SPEED - JOGADOR
+--------------------------------------------------
+
+local DefaultWalkSpeed = 16
+local CurrentHumanoid
+
+local function captureHumanoid(character)
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then
+		return
+	end
+
+	CurrentHumanoid = humanoid
+	DefaultWalkSpeed = humanoid.WalkSpeed
+
+	-- 0 = velocidade normal
+	if Settings.WalkSpeedBoost <= 0 then
+		humanoid.WalkSpeed = DefaultWalkSpeed
+	else
+		humanoid.WalkSpeed = DefaultWalkSpeed + Settings.WalkSpeedBoost
+	end
+end
+
+local function setWalkSpeedBoost(value)
+	value = tonumber(value) or 0
+	value = math.clamp(math.floor(value + 0.5), 0, 100)
+	Settings.WalkSpeedBoost = value
+
+	local character = Player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+	if humanoid then
+		if Settings.WalkSpeedBoost == 0 then
+			humanoid.WalkSpeed = DefaultWalkSpeed
+		else
+			humanoid.WalkSpeed = DefaultWalkSpeed + Settings.WalkSpeedBoost
+		end
+	end
+
+	return value
+end
+
+if Player.Character then
+	captureHumanoid(Player.Character)
+end
+
+Player.CharacterAdded:Connect(function(character)
+	local humanoid = character:WaitForChild("Humanoid", 5)
+	if humanoid then
+		task.wait(0.1)
+		captureHumanoid(character)
+	end
+end)
 
 --------------------------------------------------
 -- GUI
@@ -347,20 +406,106 @@ function ShowPlayerMenu()
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Jogador")
 
-	local Info = Instance.new("TextLabel")
-	Info.Size = UDim2.new(1, -32, 0, 80)
-	Info.Position = UDim2.new(0, 16, 0, 82)
-	Info.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
-	Info.BorderSizePixel = 0
-	Info.Text = "Nenhuma opção de jogador adicionada."
-	Info.TextColor3 = Color3.fromRGB(160, 160, 168)
-	Info.TextSize = 15
-	Info.Font = Enum.Font.Gotham
-	Info.Parent = Content
+	--------------------------------------------------
+	-- WALK SPEED
+	--------------------------------------------------
 
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 7)
-	Corner.Parent = Info
+	local WalkCard = Instance.new("Frame")
+	WalkCard.Size = UDim2.new(1, -32, 0, 58)
+	WalkCard.Position = UDim2.new(0, 16, 0, 82)
+	WalkCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	WalkCard.BorderSizePixel = 0
+	WalkCard.Parent = Content
+
+	local WalkCorner = Instance.new("UICorner")
+	WalkCorner.CornerRadius = UDim.new(0, 8)
+	WalkCorner.Parent = WalkCard
+
+	local WalkLabel = Instance.new("TextLabel")
+	WalkLabel.Size = UDim2.new(1, -230, 1, 0)
+	WalkLabel.Position = UDim2.new(0, 16, 0, 0)
+	WalkLabel.BackgroundTransparency = 1
+	WalkLabel.Text = "Walk Speed"
+	WalkLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
+	WalkLabel.TextSize = 18
+	WalkLabel.Font = Enum.Font.Gotham
+	WalkLabel.TextXAlignment = Enum.TextXAlignment.Left
+	WalkLabel.Parent = WalkCard
+
+	local WalkInput = Instance.new("TextBox")
+	WalkInput.Size = UDim2.new(0, 142, 0, 34)
+	WalkInput.Position = UDim2.new(1, -205, 0.5, -17)
+	WalkInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+	WalkInput.BorderSizePixel = 0
+	WalkInput.Text = tostring(Settings.WalkSpeedBoost)
+	WalkInput.PlaceholderText = "0 - 100"
+	WalkInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
+	WalkInput.TextColor3 = Color3.fromRGB(220, 220, 225)
+	WalkInput.TextSize = 14
+	WalkInput.Font = Enum.Font.Gotham
+	WalkInput.ClearTextOnFocus = false
+	WalkInput.Parent = WalkCard
+
+	local InputStroke = Instance.new("UIStroke")
+	InputStroke.Thickness = 1.5
+	InputStroke.Color = Color3.fromRGB(62, 139, 195)
+	InputStroke.Parent = WalkInput
+
+	local InputCorner = Instance.new("UICorner")
+	InputCorner.CornerRadius = UDim.new(0, 8)
+	InputCorner.Parent = WalkInput
+
+	local Pencil = Instance.new("TextLabel")
+	Pencil.Size = UDim2.new(0, 40, 1, 0)
+	Pencil.Position = UDim2.new(1, -50, 0, 0)
+	Pencil.BackgroundTransparency = 1
+	Pencil.Text = "✎"
+	Pencil.TextColor3 = Color3.fromRGB(190, 190, 198)
+	Pencil.TextSize = 22
+	Pencil.Font = Enum.Font.Gotham
+	Pencil.Parent = WalkCard
+
+	local Hint = Instance.new("TextLabel")
+	Hint.Size = UDim2.new(1, -32, 0, 22)
+	Hint.Position = UDim2.new(0, 16, 0, 145)
+	Hint.BackgroundTransparency = 1
+	Hint.Text = "0 = velocidade normal  •  1-100 = aumento de velocidade"
+	Hint.TextColor3 = Color3.fromRGB(125, 125, 132)
+	Hint.TextSize = 12
+	Hint.Font = Enum.Font.Gotham
+	Hint.TextXAlignment = Enum.TextXAlignment.Left
+	Hint.Parent = Content
+
+	local function ApplyWalkInput()
+		local value = tonumber(WalkInput.Text)
+
+		if not value then
+			value = 0
+		end
+
+		value = setWalkSpeedBoost(value)
+		WalkInput.Text = tostring(value)
+	end
+
+	WalkInput.FocusLost:Connect(function()
+		ApplyWalkInput()
+	end)
+
+	WalkInput:GetPropertyChangedSignal("Text"):Connect(function()
+		local clean = WalkInput.Text:gsub("[^%d]", "")
+
+		if clean ~= WalkInput.Text then
+			WalkInput.Text = clean
+			return
+		end
+
+		if clean ~= "" then
+			local value = tonumber(clean)
+			if value and value > 100 then
+				WalkInput.Text = "100"
+			end
+		end
+	end)
 end
 
 function ShowVisualMenu()
