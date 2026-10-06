@@ -21,6 +21,9 @@ local Settings = {
 
 }
 
+-- Será definido na parte do ESP; permite que os toggles atualizem imediatamente.
+local refreshAllESP
+
 --------------------------------------------------
 -- GUI
 --------------------------------------------------
@@ -207,9 +210,14 @@ local function CreateOption(parent, text, y, value, callback)
 		callback(Enabled)
 	end
 
-	Button.MouseButton1Click:Connect(function()
+	Button.Activated:Connect(function()
 		Enabled = not Enabled
 		Update()
+
+		-- Atualiza/remover os elementos do ESP imediatamente.
+		if refreshAllESP then
+			task.defer(refreshAllESP)
+		end
 	end)
 
 	Update()
@@ -353,6 +361,7 @@ function ShowVisualMenu()
 		Settings.EnableESP,
 		function(value)
 			Settings.EnableESP = value
+			if refreshAllESP then task.defer(refreshAllESP) end
 		end
 	)
 
@@ -363,6 +372,7 @@ function ShowVisualMenu()
 		Settings.EnableBoxes,
 		function(value)
 			Settings.EnableBoxes = value
+			if refreshAllESP then task.defer(refreshAllESP) end
 		end
 	)
 
@@ -373,6 +383,7 @@ function ShowVisualMenu()
 		Settings.EnableNames,
 		function(value)
 			Settings.EnableNames = value
+			if refreshAllESP then task.defer(refreshAllESP) end
 		end
 	)
 
@@ -383,6 +394,7 @@ function ShowVisualMenu()
 		Settings.EnableDistance,
 		function(value)
 			Settings.EnableDistance = value
+			if refreshAllESP then task.defer(refreshAllESP) end
 		end
 	)
 
@@ -393,6 +405,7 @@ function ShowVisualMenu()
 		Settings.EnableTracers,
 		function(value)
 			Settings.EnableTracers = value
+			if refreshAllESP then task.defer(refreshAllESP) end
 		end
 	)
 end
@@ -747,7 +760,7 @@ local function updateESP(plr)
     end
 end
 
-local function refreshAllESP()
+refreshAllESP = function()
     for _, plr in ipairs(Players:GetPlayers()) do
         updateESP(plr)
     end
