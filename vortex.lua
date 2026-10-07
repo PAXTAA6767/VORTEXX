@@ -159,47 +159,9 @@ local waitingAimbotKey = false
 --------------------------------------------------
 
 
-local FlyAttachment = nil
-local FlyVelocity = nil
-
-local function destroyFlyVelocity()
-	if FlyVelocity then
-		FlyVelocity:Destroy()
-		FlyVelocity = nil
-	end
-	if FlyAttachment then
-		FlyAttachment:Destroy()
-		FlyAttachment = nil
-	end
-end
-
-local function ensureFlyVelocity(root)
-	if FlyVelocity and FlyVelocity.Parent == root and FlyAttachment and FlyAttachment.Parent == root then
-		return FlyVelocity
-	end
-
-	destroyFlyVelocity()
-
-	FlyAttachment = Instance.new("Attachment")
-	FlyAttachment.Name = "VortexFlyAttachment"
-	FlyAttachment.Parent = root
-
-	FlyVelocity = Instance.new("LinearVelocity")
-	FlyVelocity.Name = "VortexFlyVelocity"
-	FlyVelocity.Attachment0 = FlyAttachment
-	FlyVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
-	FlyVelocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
-	FlyVelocity.ForceLimitsEnabled = false
-	FlyVelocity.VectorVelocity = Vector3.zero
-	FlyVelocity.Parent = root
-
-	return FlyVelocity
-end
-
 local function setFly(value)
 	Settings.Fly = value
 	if not value then
-		destroyFlyVelocity()
 		local character = Player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -274,15 +236,13 @@ RunService.Heartbeat:Connect(function()
 		end
 	end
 
-	local flySpeed = Settings.FlySpeed == 0 and 16 or math.clamp(Settings.FlySpeed, 0, 100)
-	local horizontal = Vector3.zero
-
 	if direction.Magnitude > 0 then
-		horizontal = direction.Unit * flySpeed
+		local flySpeed = Settings.FlySpeed == 0 and 16 or Settings.FlySpeed
+		local horizontal = direction.Unit * flySpeed
+		root.AssemblyLinearVelocity = Vector3.new(horizontal.X, vertical, horizontal.Z)
+	else
+		root.AssemblyLinearVelocity = Vector3.new(0, vertical, 0)
 	end
-
-	local controller = ensureFlyVelocity(root)
-	controller.VectorVelocity = Vector3.new(horizontal.X, vertical, horizontal.Z)
 
 	humanoid.AutoRotate = true
 end)
@@ -338,7 +298,7 @@ end
 
 local function setWalkSpeedBoost(value)
 	value = tonumber(value) or 0
-	value = math.clamp(math.floor(value + 0.5), 0, 100)
+	value = math.clamp(math.floor(value + 0.5), 0, 200)
 
 	local humanoid = captureHumanoid()
 
@@ -366,7 +326,7 @@ end)
 -- Reaplica a velocidade e, se necessário, reforça o movimento horizontal.
 -- Isso ajuda em jogos que possuem outro controlador alterando o WalkSpeed.
 RunService.Heartbeat:Connect(function()
-	-- Não sobrescreve a velocidade horizontal enquanto o voo estiver ativo.
+	-- Enquanto estiver voando, não deixa o WalkSpeed sobrescrever a velocidade do voo.
 	if Settings.Fly or Settings.WalkSpeedBoost <= 0 then
 		return
 	end
@@ -1369,7 +1329,7 @@ function ShowPlayerMenu()
 	FlySpeedLabel.Size = UDim2.new(1, -32, 0, 28)
 	FlySpeedLabel.Position = UDim2.new(0, 16, 0, 5)
 	FlySpeedLabel.BackgroundTransparency = 1
-	FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(Settings.FlySpeed) .. " / 100"
+	FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(Settings.FlySpeed)
 	FlySpeedLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
 	FlySpeedLabel.TextSize = 15
 	FlySpeedLabel.Font = Enum.Font.Gotham
@@ -1422,7 +1382,7 @@ function ShowPlayerMenu()
 		Settings.FlySpeed = value
 		FlyFill.Size = UDim2.new(alpha, 0, 1, 0)
 		FlyKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
-		FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(value) .. " / 100"
+		FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(value)
 	end
 
 	FlyKnob.InputBegan:Connect(function(input)
