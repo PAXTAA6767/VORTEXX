@@ -39,7 +39,6 @@ local Settings = {
 	EnableNames = false,
 	EnableDistance = false,
 	EnableTracers = false,
-	ShowBounty = false,
 
 }
 
@@ -1356,14 +1355,10 @@ function ShowVisualMenu()
 		if refreshAllESP then task.defer(refreshAllESP) end
 	end)
 
-	CreateOption(VisualScroll, "Mostrar Bounty", 316, Settings.ShowBounty, function(value)
-		Settings.ShowBounty = value
-	end)
-
 	-- Espaço inferior para que a última opção não fique colada no limite.
 	local BottomSpace = Instance.new("Frame")
 	BottomSpace.Size = UDim2.new(1, 0, 0, 18)
-	BottomSpace.Position = UDim2.new(0, 0, 0, 378)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 316)
 	BottomSpace.BackgroundTransparency = 1
 	BottomSpace.Parent = VisualScroll
 end
@@ -2202,116 +2197,6 @@ UserInputService.InputBegan:Connect(function(input, processed)
 			Status.Text = '<font color="rgb(70,145,200)">Status</font><font color="rgb(110,110,118)"> | Idle</font>'
 		end
 	end
-end)
-
-
-
---------------------------------------------------
--- BOUNTY VISUAL - PARA O SEU PRÓPRIO JOGO
---------------------------------------------------
-
-local BountyBillboards = {}
-
--- Fonte compartilhada com o painel de PROCURADOS do seu jogo.
--- Quando o seu painel atualizar um jogador, chame:
--- SetWantedPanelBounty(player, valor)
-local WantedPanelBounties = {}
-
-local function SetWantedPanelBounty(targetPlayer, amount)
-	if not targetPlayer then return end
-	WantedPanelBounties[targetPlayer.UserId] = math.max(0, math.floor(tonumber(amount) or 0))
-end
-
-local function getBountyValue(targetPlayer)
-	-- O Vortex mostra exatamente o mesmo valor registrado para o painel.
-	return WantedPanelBounties[targetPlayer.UserId] or 0
-end
-
--- Exemplo de integração no script do seu painel:
--- SetWantedPanelBounty(player, 5800)
--- SetWantedPanelBounty(outroPlayer, 4150)
-
-local function isBountyCriminal(targetPlayer)
-	local team = targetPlayer.Team
-	local teamName = team and string.lower(team.Name or "") or ""
-
-	return string.find(teamName, "ladrao", 1, true) ~= nil
-		or string.find(teamName, "ladrão", 1, true) ~= nil
-		or string.find(teamName, "criminal", 1, true) ~= nil
-		or string.find(teamName, "criminoso", 1, true) ~= nil
-		or string.find(teamName, "bandido", 1, true) ~= nil
-		or string.find(teamName, "thief", 1, true) ~= nil
-		or string.find(teamName, "robber", 1, true) ~= nil
-end
-
-local function removeBountyBillboard(targetPlayer)
-	local billboard = BountyBillboards[targetPlayer]
-	if billboard then
-		billboard:Destroy()
-		BountyBillboards[targetPlayer] = nil
-	end
-end
-
-local function updateBountyBillboard(targetPlayer)
-	if targetPlayer == Player then return end
-
-	local character = targetPlayer.Character
-	local head = character and character:FindFirstChild("Head")
-	local bounty = getBountyValue(targetPlayer)
-	local shouldShow = Settings.ShowBounty and isBountyCriminal(targetPlayer) and bounty > 0
-
-	if not shouldShow or not head then
-		removeBountyBillboard(targetPlayer)
-		return
-	end
-
-	local billboard = BountyBillboards[targetPlayer]
-	if not billboard or not billboard.Parent then
-		billboard = Instance.new("BillboardGui")
-		billboard.Name = "VortexBounty"
-		billboard.Size = UDim2.new(0, 180, 0, 20)
-		billboard.StudsOffset = Vector3.new(0, 2.15, 0)
-		billboard.AlwaysOnTop = true
-		billboard.MaxDistance = 1000
-		billboard.Adornee = head
-		billboard.Parent = head
-
-		local label = Instance.new("TextLabel")
-		label.Name = "BountyText"
-		label.Size = UDim2.fromScale(1, 1)
-		label.BackgroundTransparency = 1
-		label.TextColor3 = Color3.fromRGB(255, 185, 45)
-		label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-		label.TextStrokeTransparency = 0.25
-		label.TextSize = 12
-		label.Font = Enum.Font.GothamBold
-		label.TextXAlignment = Enum.TextXAlignment.Center
-		label.Parent = billboard
-
-		BountyBillboards[targetPlayer] = billboard
-	end
-
-	billboard.Adornee = head
-	local label = billboard:FindFirstChild("BountyText")
-	if label then
-		label.Text = "Bounty: $" .. string.format("%d", bounty)
-	end
-end
-
-local bountyAccumulator = 0
-RunService.Heartbeat:Connect(function(dt)
-	bountyAccumulator += dt
-	if bountyAccumulator < 0.15 then return end
-	bountyAccumulator = 0
-
-	for _, targetPlayer in ipairs(Players:GetPlayers()) do
-		updateBountyBillboard(targetPlayer)
-	end
-end)
-
-Players.PlayerRemoving:Connect(function(targetPlayer)
-	removeBountyBillboard(targetPlayer)
-	WantedPanelBounties[targetPlayer.UserId] = nil
 end)
 
 
