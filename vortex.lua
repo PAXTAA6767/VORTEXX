@@ -3082,22 +3082,30 @@ local function updateESP(plr)
 				data.Tracer2D = line
 			end
 
-			local from3D = localRoot.Position
-			local to3D = root.Position
-			local from2D, fromVisible = camera:WorldToViewportPoint(from3D)
-			local to2D, toVisible = camera:WorldToViewportPoint(to3D)
+			-- Converte o centro visual do personagem local e do alvo para a tela.
+			-- Usamos a posição do HumanoidRootPart + offset para a linha parecer presa ao corpo.
+			local fromWorld = localRoot.Position + Vector3.new(0, 0.5, 0)
+			local toWorld = root.Position + Vector3.new(0, 0.5, 0)
 
-			if from3D and to3D and from2D.Z > 0 and to2D.Z > 0 then
-				local p1 = Vector2.new(from2D.X, from2D.Y)
-				local p2 = Vector2.new(to2D.X, to2D.Y)
+			local from2D = camera:WorldToViewportPoint(fromWorld)
+			local to2D = camera:WorldToViewportPoint(toWorld)
+
+			if from2D.Z > 0 and to2D.Z > 0 then
+				local guiInset = game:GetService("GuiService"):GetGuiInset()
+				local p1 = Vector2.new(from2D.X, from2D.Y) - guiInset
+				local p2 = Vector2.new(to2D.X, to2D.Y) - guiInset
 				local delta = p2 - p1
 				local length = delta.Magnitude
 
-				data.Tracer2D.Visible = length > 0
-				data.Tracer2D.BackgroundColor3 = teamColor
-				data.Tracer2D.Position = UDim2.fromOffset(p1.X, p1.Y)
-				data.Tracer2D.Size = UDim2.fromOffset(length, 2)
-				data.Tracer2D.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+				if length > 1 then
+					data.Tracer2D.Visible = true
+					data.Tracer2D.BackgroundColor3 = teamColor
+					data.Tracer2D.Position = UDim2.fromOffset(p1.X, p1.Y)
+					data.Tracer2D.Size = UDim2.fromOffset(length, 2)
+					data.Tracer2D.Rotation = math.deg(math.atan2(delta.Y, delta.X))
+				else
+					data.Tracer2D.Visible = false
+				end
 			else
 				data.Tracer2D.Visible = false
 			end
