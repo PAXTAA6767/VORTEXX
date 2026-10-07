@@ -147,7 +147,13 @@ local function setFly(value)
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if humanoid then humanoid.AutoRotate = true end
-		if root then root.AssemblyLinearVelocity = Vector3.zero end
+		if root then
+			root.AssemblyLinearVelocity = Vector3.new(
+				root.AssemblyLinearVelocity.X,
+				0,
+				root.AssemblyLinearVelocity.Z
+			)
+		end
 	end
 end
 
@@ -168,7 +174,7 @@ RunService.Heartbeat:Connect(function()
 	if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
 		vertical = FLY_SPEED
 	elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-		vertical = -FLY_SPEED
+		vertical = -14
 	end
 
 	if direction.Magnitude > 0 then
