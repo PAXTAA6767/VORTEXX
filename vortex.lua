@@ -1209,72 +1209,107 @@ function ShowPlayerMenu()
 	PlayerScroll.Parent = Content
 
 	local WalkCard = Instance.new("Frame")
-	WalkCard.Size = UDim2.new(1, -32, 0, 58)
+	WalkCard.Size = UDim2.new(1, -32, 0, 76)
 	WalkCard.Position = UDim2.new(0, 16, 0, 18)
 	WalkCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	WalkCard.BorderSizePixel = 0
 	WalkCard.Parent = PlayerScroll
-
-	local WalkCorner = Instance.new("UICorner")
-	WalkCorner.CornerRadius = UDim.new(0, 8)
-	WalkCorner.Parent = WalkCard
+	Instance.new("UICorner", WalkCard).CornerRadius = UDim.new(0, 8)
 
 	local WalkLabel = Instance.new("TextLabel")
-	WalkLabel.Size = UDim2.new(1, -230, 1, 0)
-	WalkLabel.Position = UDim2.new(0, 16, 0, 0)
+	WalkLabel.Size = UDim2.new(1, -32, 0, 28)
+	WalkLabel.Position = UDim2.new(0, 16, 0, 5)
 	WalkLabel.BackgroundTransparency = 1
-	WalkLabel.Text = "Velocidade"
+	WalkLabel.Text = "Velocidade: " .. tostring(Settings.WalkSpeedBoost)
 	WalkLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
-	WalkLabel.TextSize = 18
+	WalkLabel.TextSize = 15
 	WalkLabel.Font = Enum.Font.Gotham
 	WalkLabel.TextXAlignment = Enum.TextXAlignment.Left
 	WalkLabel.Parent = WalkCard
 
-	local WalkInput = Instance.new("TextBox")
-	WalkInput.Size = UDim2.new(0, 142, 0, 34)
-	WalkInput.Position = UDim2.new(1, -205, 0.5, -17)
-	WalkInput.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
-	WalkInput.BorderSizePixel = 0
-	WalkInput.Text = tostring(Settings.WalkSpeedBoost)
-	WalkInput.PlaceholderText = "0 - 200"
-	WalkInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 128)
-	WalkInput.TextColor3 = Color3.fromRGB(220, 220, 225)
-	WalkInput.TextSize = 14
-	WalkInput.Font = Enum.Font.Gotham
-	WalkInput.ClearTextOnFocus = false
-	WalkInput.Parent = WalkCard
+	local WalkBar = Instance.new("Frame")
+	WalkBar.Size = UDim2.new(1, -32, 0, 8)
+	WalkBar.Position = UDim2.new(0, 16, 0, 48)
+	WalkBar.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
+	WalkBar.BorderSizePixel = 0
+	WalkBar.Parent = WalkCard
+	Instance.new("UICorner", WalkBar).CornerRadius = UDim.new(1, 0)
 
-	local InputStroke = Instance.new("UIStroke")
-	InputStroke.Thickness = 1.5
-	InputStroke.Color = GetTheme().Accent
-	InputStroke.Parent = WalkInput
+	local WalkFill = Instance.new("Frame")
+	WalkFill.Size = UDim2.new(Settings.WalkSpeedBoost / 200, 0, 1, 0)
+	WalkFill.BackgroundColor3 = GetTheme().Accent
+	WalkFill.BorderSizePixel = 0
+	WalkFill.Parent = WalkBar
+	Instance.new("UICorner", WalkFill).CornerRadius = UDim.new(1, 0)
 
-	local InputCorner = Instance.new("UICorner")
-	InputCorner.CornerRadius = UDim.new(0, 8)
-	InputCorner.Parent = WalkInput
+	local WalkKnob = Instance.new("TextButton")
+	WalkKnob.Size = UDim2.new(0, 22, 0, 22)
+	WalkKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+	WalkKnob.Position = UDim2.new(Settings.WalkSpeedBoost / 200, 0, 0.5, 0)
+	WalkKnob.BackgroundColor3 = GetTheme().Accent
+	WalkKnob.BorderSizePixel = 0
+	WalkKnob.Text = ""
+	WalkKnob.AutoButtonColor = false
+	WalkKnob.Parent = WalkBar
+	Instance.new("UICorner", WalkKnob).CornerRadius = UDim.new(1, 0)
 
-	local Pencil = Instance.new("TextLabel")
-	Pencil.Size = UDim2.new(0, 40, 1, 0)
-	Pencil.Position = UDim2.new(1, -50, 0, 0)
-	Pencil.BackgroundTransparency = 1
-	Pencil.Text = "👟"
-	Pencil.TextColor3 = Color3.fromRGB(190, 190, 198)
-	Pencil.TextSize = 22
-	Pencil.Font = Enum.Font.Gotham
-	Pencil.Parent = WalkCard
+	local draggingWalkSpeed = false
+
+	local function updateWalkSpeedSlider(inputX)
+		local width = WalkBar.AbsoluteSize.X
+		if width <= 0 then return end
+
+		local alpha = math.clamp((inputX - WalkBar.AbsolutePosition.X) / width, 0, 1)
+		local value = math.clamp(math.floor(alpha * 200 + 0.5), 0, 200)
+
+		setWalkSpeedBoost(value)
+		WalkFill.Size = UDim2.new(alpha, 0, 1, 0)
+		WalkKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
+		WalkLabel.Text = "Velocidade: " .. tostring(value)
+	end
+
+	WalkKnob.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			draggingWalkSpeed = true
+			updateWalkSpeedSlider(input.Position.X)
+		end
+	end)
+
+	WalkBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			draggingWalkSpeed = true
+			updateWalkSpeedSlider(input.Position.X)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if draggingWalkSpeed and (input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch) then
+			updateWalkSpeedSlider(input.Position.X)
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			draggingWalkSpeed = false
+		end
+	end)
 
 	local Hint = Instance.new("TextLabel")
 	Hint.Size = UDim2.new(1, -32, 0, 22)
-	Hint.Position = UDim2.new(0, 16, 0, 81)
+	Hint.Position = UDim2.new(0, 16, 0, 98)
 	Hint.BackgroundTransparency = 1
-	Hint.Text = "0 = normal  •  1-200 = aumento sobre a velocidade base"
+	Hint.Text = "0 = normal  •  arraste para ajustar de 0 a 200"
 	Hint.TextColor3 = Color3.fromRGB(125, 125, 132)
 	Hint.TextSize = 12
 	Hint.Font = Enum.Font.Gotham
 	Hint.TextXAlignment = Enum.TextXAlignment.Left
 	Hint.Parent = PlayerScroll
 
-	CreateOption(PlayerScroll, "No Wait", 118, Settings.NoWait, function(value)
+	CreateOption(PlayerScroll, "No Wait", 135, Settings.NoWait, function(value)
 		Settings.NoWait = value
 		refreshNoWait()
 	end)
@@ -1422,7 +1457,7 @@ function ShowPlayerMenu()
 
 	local NoWaitHint = Instance.new("TextLabel")
 	NoWaitHint.Size = UDim2.new(1, -32, 0, 22)
-	NoWaitHint.Position = UDim2.new(0, 16, 0, 176)
+	NoWaitHint.Position = UDim2.new(0, 16, 0, 193)
 	NoWaitHint.BackgroundTransparency = 1
 	NoWaitHint.Text = "Remove o tempo de espera ao interagir com objetos."
 	NoWaitHint.TextColor3 = Color3.fromRGB(125, 125, 132)
