@@ -19,6 +19,8 @@ local Settings = {
 	WalkSpeedBoost = 0,
 	Fly = false,
 	FlySpeed = 0,
+	FlyKeybind = Enum.KeyCode.V,
+	AimbotKeybind = Enum.KeyCode.Q,
 	FollowPlayer = false,
 	NoWait = false,
 	GodMode = false,
@@ -136,6 +138,20 @@ Players.PlayerRemoving:Connect(function(leavingPlayer)
 end)
 
 --------------------------------------------------
+-- KEYBINDS - JOGADOR
+--------------------------------------------------
+
+local function keyName(key)
+	if not key then return "Nenhuma" end
+	return key.Name
+end
+
+local FlyKeyButton = nil
+local AimbotKeyButton = nil
+local waitingFlyKey = false
+local waitingAimbotKey = false
+
+--------------------------------------------------
 -- VOAR - JOGADOR
 --------------------------------------------------
 
@@ -192,7 +208,29 @@ RunService.Heartbeat:Connect(function()
 	if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
 		vertical = Settings.FlySpeed == 0 and 16 or Settings.FlySpeed
 	elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-		vertical = -14
+		vertical = -26
+	end
+
+	-- Pouso suave: ao se aproximar do chão durante a descida,
+	-- reduz a velocidade vertical antes do contato para não gerar impacto.
+	if vertical < 0 then
+		local rayParams = RaycastParams.new()
+		rayParams.FilterType = Enum.RaycastFilterType.Exclude
+		rayParams.FilterDescendantsInstances = {character}
+		rayParams.IgnoreWater = false
+
+		local groundHit = workspace:Raycast(
+			root.Position,
+			Vector3.new(0, -5, 0),
+			rayParams
+		)
+
+		if groundHit then
+			local distanceToGround = (root.Position - groundHit.Position).Magnitude
+			if distanceToGround <= 3.5 then
+				vertical = -2
+			end
+		end
 	end
 
 	if direction.Magnitude > 0 then
@@ -479,6 +517,43 @@ end)
 workspace.DescendantRemoving:Connect(function(object)
 	if object:IsA("ProximityPrompt") then
 		OriginalPromptDurations[object] = nil
+	end
+end)
+
+--------------------------------------------------
+-- ATALHOS DE TECLADO
+--------------------------------------------------
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+
+	if waitingFlyKey then
+		Settings.FlyKeybind = input.KeyCode
+		waitingFlyKey = false
+		if FlyKeyButton then
+			FlyKeyButton.Text = keyName(input.KeyCode)
+		end
+		return
+	end
+
+	if waitingAimbotKey then
+		Settings.AimbotKeybind = input.KeyCode
+		waitingAimbotKey = false
+		if AimbotKeyButton then
+			AimbotKeyButton.Text = keyName(input.KeyCode)
+		end
+		return
+	end
+
+	if gameProcessed then return end
+
+	if input.KeyCode == Settings.FlyKeybind then
+		setFly(not Settings.Fly)
+		return
+	end
+
+	if input.KeyCode == Settings.AimbotKeybind then
+		Settings.Aimbot = not Settings.Aimbot
 	end
 end)
 
@@ -1074,6 +1149,35 @@ function ShowPlayerMenu()
 		setFly(value)
 	end)
 
+	local FlyKeyLabel = Instance.new("TextLabel")
+	FlyKeyLabel.Size = UDim2.new(0, 105, 0, 30)
+	FlyKeyLabel.Position = UDim2.new(1, -245, 0, 224)
+	FlyKeyLabel.BackgroundTransparency = 1
+	FlyKeyLabel.Text = "Keybind:"
+	FlyKeyLabel.TextColor3 = Color3.fromRGB(180, 180, 185)
+	FlyKeyLabel.TextSize = 13
+	FlyKeyLabel.Font = Enum.Font.Gotham
+	FlyKeyLabel.TextXAlignment = Enum.TextXAlignment.Right
+	FlyKeyLabel.Parent = PlayerScroll
+
+	FlyKeyButton = Instance.new("TextButton")
+	FlyKeyButton.Size = UDim2.new(0, 72, 0, 28)
+	FlyKeyButton.Position = UDim2.new(1, -92, 0, 225)
+	FlyKeyButton.BackgroundColor3 = Color3.fromRGB(55, 55, 62)
+	FlyKeyButton.BorderSizePixel = 0
+	FlyKeyButton.Text = keyName(Settings.FlyKeybind)
+	FlyKeyButton.TextColor3 = Color3.fromRGB(235, 235, 240)
+	FlyKeyButton.TextSize = 13
+	FlyKeyButton.Font = Enum.Font.GothamBold
+	FlyKeyButton.Parent = PlayerScroll
+	Instance.new("UICorner", FlyKeyButton).CornerRadius = UDim.new(0, 6)
+
+	FlyKeyButton.MouseButton1Click:Connect(function()
+		waitingFlyKey = true
+		waitingAimbotKey = false
+		FlyKeyButton.Text = "..."
+	end)
+
 	-- Barra de velocidade do voo: 0 a 200
 	local FlySpeedCard = Instance.new("Frame")
 	FlySpeedCard.Size = UDim2.new(1, -32, 0, 76)
@@ -1195,6 +1299,36 @@ function ShowPlayerMenu()
 	CreateOption(PlayerScroll, "Aimbot", 482, Settings.Aimbot, function(value)
 		Settings.Aimbot = value
 	end)
+
+	local AimbotKeyLabel = Instance.new("TextLabel")
+	AimbotKeyLabel.Size = UDim2.new(0, 105, 0, 30)
+	AimbotKeyLabel.Position = UDim2.new(1, -245, 0, 494)
+	AimbotKeyLabel.BackgroundTransparency = 1
+	AimbotKeyLabel.Text = "Keybind:"
+	AimbotKeyLabel.TextColor3 = Color3.fromRGB(180, 180, 185)
+	AimbotKeyLabel.TextSize = 13
+	AimbotKeyLabel.Font = Enum.Font.Gotham
+	AimbotKeyLabel.TextXAlignment = Enum.TextXAlignment.Right
+	AimbotKeyLabel.Parent = PlayerScroll
+
+	AimbotKeyButton = Instance.new("TextButton")
+	AimbotKeyButton.Size = UDim2.new(0, 72, 0, 28)
+	AimbotKeyButton.Position = UDim2.new(1, -92, 0, 495)
+	AimbotKeyButton.BackgroundColor3 = Color3.fromRGB(55, 55, 62)
+	AimbotKeyButton.BorderSizePixel = 0
+	AimbotKeyButton.Text = keyName(Settings.AimbotKeybind)
+	AimbotKeyButton.TextColor3 = Color3.fromRGB(235, 235, 240)
+	AimbotKeyButton.TextSize = 13
+	AimbotKeyButton.Font = Enum.Font.GothamBold
+	AimbotKeyButton.Parent = PlayerScroll
+	Instance.new("UICorner", AimbotKeyButton).CornerRadius = UDim.new(0, 6)
+
+	AimbotKeyButton.MouseButton1Click:Connect(function()
+		waitingAimbotKey = true
+		waitingFlyKey = false
+		AimbotKeyButton.Text = "..."
+	end)
+
 
 	local AimbotHint = Instance.new("TextLabel")
 	AimbotHint.Size = UDim2.new(1, -32, 0, 22)
