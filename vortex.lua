@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -19,8 +20,10 @@ local Settings = {
 	WalkSpeedBoost = 0,
 	Fly = false,
 	FlySpeed = 0,
-	FlyKeybind = Enum.KeyCode.V,
-	AimbotKeybind = Enum.KeyCode.Q,
+	FlyKeybind = Enum.KeyCode.Up,
+	AimbotKeybind = Enum.KeyCode.F,
+	NotificationsEnabled = true,
+	NotificationSize = "Media",
 	FollowPlayer = false,
 	NoWait = false,
 	GodMode = false,
@@ -521,6 +524,12 @@ workspace.DescendantRemoving:Connect(function(object)
 end)
 
 --------------------------------------------------
+-- NOTIFICAÇÕES
+--------------------------------------------------
+
+local ShowVortexNotification = function() end
+
+--------------------------------------------------
 -- ATALHOS DE TECLADO
 --------------------------------------------------
 
@@ -549,11 +558,13 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 
 	if input.KeyCode == Settings.FlyKeybind then
 		setFly(not Settings.Fly)
+		ShowVortexNotification("Voar", Settings.Fly)
 		return
 	end
 
 	if input.KeyCode == Settings.AimbotKeybind then
 		Settings.Aimbot = not Settings.Aimbot
+		ShowVortexNotification("Aimbot", Settings.Aimbot)
 	end
 end)
 
@@ -565,7 +576,88 @@ local Gui = Instance.new("ScreenGui")
 Gui.Name = "VortexPanel"
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = false
+
 Gui.Parent = PlayerGui
+
+local NotificationHolder = Instance.new("Frame")
+NotificationHolder.Name = "NotificationHolder"
+NotificationHolder.AnchorPoint = Vector2.new(1, 1)
+NotificationHolder.Position = UDim2.new(1, -18, 1, -18)
+NotificationHolder.Size = UDim2.new(0, 330, 0, 250)
+NotificationHolder.BackgroundTransparency = 1
+NotificationHolder.Parent = Gui
+
+local NotificationLayout = Instance.new("UIListLayout")
+NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+NotificationLayout.Padding = UDim.new(0, 8)
+NotificationLayout.Parent = NotificationHolder
+
+ShowVortexNotification = function(optionName, enabled)
+	if not Settings.NotificationsEnabled then return end
+
+	local sizes = {
+		Pequena = {width = 220, height = 48, title = 13, body = 11},
+		Media = {width = 270, height = 58, title = 15, body = 12},
+		Grande = {width = 320, height = 70, title = 17, body = 14},
+	}
+	local s = sizes[Settings.NotificationSize] or sizes.Media
+
+	local Card = Instance.new("Frame")
+	Card.Size = UDim2.new(0, s.width, 0, s.height)
+	Card.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+	Card.BorderSizePixel = 0
+	Card.Parent = NotificationHolder
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 8)
+	Corner.Parent = Card
+
+	local statusColor = enabled
+		and Color3.fromRGB(55, 200, 95)
+		or Color3.fromRGB(235, 65, 65)
+
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Thickness = 1.3
+	Stroke.Color = statusColor
+	Stroke.Parent = Card
+
+	local Accent = Instance.new("Frame")
+	Accent.Size = UDim2.new(0, 4, 1, -12)
+	Accent.Position = UDim2.new(0, 7, 0, 6)
+	Accent.BackgroundColor3 = Stroke.Color
+	Accent.BorderSizePixel = 0
+	Accent.Parent = Card
+	Instance.new("UICorner", Accent).CornerRadius = UDim.new(1, 0)
+
+	local Title = Instance.new("TextLabel")
+	Title.Size = UDim2.new(1, -32, 0, math.floor(s.height * 0.46))
+	Title.Position = UDim2.new(0, 20, 0, 4)
+	Title.BackgroundTransparency = 1
+	Title.Text = optionName
+	Title.TextColor3 = Color3.fromRGB(238, 238, 242)
+	Title.TextSize = s.title
+	Title.Font = Enum.Font.GothamBold
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	Title.Parent = Card
+
+	local Body = Instance.new("TextLabel")
+	Body.Size = UDim2.new(1, -32, 0, math.floor(s.height * 0.40))
+	Body.Position = UDim2.new(0, 20, 0, math.floor(s.height * 0.48))
+	Body.BackgroundTransparency = 1
+	Body.Text = optionName .. (enabled and " ativado com sucesso." or " desativado com sucesso.")
+	Body.TextColor3 = Color3.fromRGB(170, 170, 178)
+	Body.TextSize = s.body
+	Body.Font = Enum.Font.Gotham
+	Body.TextXAlignment = Enum.TextXAlignment.Left
+	Body.Parent = Card
+
+	task.delay(2.6, function()
+		if Card and Card.Parent then
+			Card:Destroy()
+		end
+	end)
+end
 
 --------------------------------------------------
 -- JANELA PRINCIPAL - VISUAL ESTILO MERCURY/CHAOS
@@ -583,6 +675,46 @@ Main.Parent = Gui
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 7)
 MainCorner.Parent = Main
+
+local MainNormalSize = Main.Size
+local MainNormalPosition = Main.Position
+local OpeningPanel = false
+
+local function OpenPanelAnimated()
+	if OpeningPanel or Main.Visible then return end
+	OpeningPanel = true
+
+	Main.Size = UDim2.new(
+		MainNormalSize.X.Scale, math.floor(MainNormalSize.X.Offset * 0.94),
+		MainNormalSize.Y.Scale, math.floor(MainNormalSize.Y.Offset * 0.94)
+	)
+	Main.Position = UDim2.new(0.5, -273, 0.5, -176)
+	Main.Visible = true
+
+	local tween = TweenService:Create(
+		Main,
+		TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{
+			Size = MainNormalSize,
+			Position = MainNormalPosition
+		}
+	)
+
+	tween:Play()
+	tween.Completed:Once(function()
+		OpeningPanel = false
+	end)
+end
+
+local ClosingPanelAnimation = false
+
+local function ClosePanelAnimated()
+	if not Main.Visible then return end
+	Main.Visible = false
+	Main.Size = MainNormalSize
+	Main.Position = MainNormalPosition
+end
+
 
 --------------------------------------------------
 -- ABA SUPERIOR
@@ -641,7 +773,7 @@ Close.MouseButton1Click:Connect(function()
 	end
 
 	ClosingMenu = true
-	Main.Visible = false
+	ClosePanelAnimated()
 
 	task.delay(0.15, function()
 		ClosingMenu = false
@@ -1147,6 +1279,7 @@ function ShowPlayerMenu()
 
 	CreateOption(PlayerScroll, "Voar", 212, Settings.Fly, function(value)
 		setFly(value)
+		ShowVortexNotification("Voar", value)
 	end)
 
 	local FlyKeyLabel = Instance.new("TextLabel")
@@ -1298,6 +1431,7 @@ function ShowPlayerMenu()
 
 	CreateOption(PlayerScroll, "Aimbot", 482, Settings.Aimbot, function(value)
 		Settings.Aimbot = value
+		ShowVortexNotification("Aimbot", value)
 	end)
 
 	local AimbotKeyLabel = Instance.new("TextLabel")
@@ -1768,11 +1902,78 @@ function ShowOthersMenu()
 
 end
 
+function ShowNotificationSettings()
+	ClearContent()
+	AddressText.Text = "Vortex/configuração/notificações"
+	CreateBackButton(ShowConfigMenu)
+	CreateMenuTitle("Notificações")
+
+	CreateOption(Content, "Mostrar notificações", 72, Settings.NotificationsEnabled, function(value)
+		Settings.NotificationsEnabled = value
+	end)
+
+	local SizeCard = Instance.new("Frame")
+	SizeCard.Size = UDim2.new(1, -32, 0, 112)
+	SizeCard.Position = UDim2.new(0, 16, 0, 140)
+	SizeCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	SizeCard.BorderSizePixel = 0
+	SizeCard.Parent = Content
+	Instance.new("UICorner", SizeCard).CornerRadius = UDim.new(0, 8)
+
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(1, -32, 0, 32)
+	Label.Position = UDim2.new(0, 16, 0, 8)
+	Label.BackgroundTransparency = 1
+	Label.Text = "Tamanho da notificação"
+	Label.TextColor3 = Color3.fromRGB(225, 225, 230)
+	Label.TextSize = 16
+	Label.Font = Enum.Font.Gotham
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = SizeCard
+
+	local options = {"Pequena", "Media", "Grande"}
+	for i, name in ipairs(options) do
+		local Button = Instance.new("TextButton")
+		Button.Size = UDim2.new(0.31, 0, 0, 42)
+		Button.Position = UDim2.new((i - 1) * 0.33 + 0.015, 0, 0, 54)
+		Button.BackgroundColor3 = Settings.NotificationSize == name
+			and GetTheme().Accent
+			or Color3.fromRGB(39, 39, 44)
+		Button.BorderSizePixel = 0
+		Button.Text = name == "Media" and "Média" or name
+		Button.TextColor3 = Color3.fromRGB(235, 235, 240)
+		Button.TextSize = 13
+		Button.Font = Enum.Font.GothamBold
+		Button.Parent = SizeCard
+		Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 7)
+
+		Button.Activated:Connect(function()
+			Settings.NotificationSize = name
+			ShowNotificationSettings()
+			ShowVortexNotification("Notificações", true)
+		end)
+	end
+end
+
 function ShowConfigMenu()
 	ClearContent()
 	AddressText.Text = "Vortex/configuração"
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Configuração")
+
+	local ConfigScroll = Instance.new("ScrollingFrame")
+	ConfigScroll.Name = "ConfigScroll"
+	ConfigScroll.Size = UDim2.new(1, -12, 1, -64)
+	ConfigScroll.Position = UDim2.new(0, 6, 0, 64)
+	ConfigScroll.BackgroundTransparency = 1
+	ConfigScroll.BorderSizePixel = 0
+	ConfigScroll.CanvasSize = UDim2.new(0, 0, 0, 520)
+	ConfigScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	ConfigScroll.ScrollBarThickness = 4
+	ConfigScroll.ScrollBarImageColor3 = GetTheme().Accent
+	ConfigScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+	ConfigScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+	ConfigScroll.Parent = Content
 
 	local theme = GetTheme()
 
@@ -1782,10 +1983,10 @@ function ShowConfigMenu()
 
 	local ThemeContainer = Instance.new("Frame")
 	ThemeContainer.Size = UDim2.new(1, -32, 0, 116)
-	ThemeContainer.Position = UDim2.new(0, 16, 0, 64)
+	ThemeContainer.Position = UDim2.new(0, 16, 0, 29)
 	ThemeContainer.BackgroundColor3 = Color3.fromRGB(42, 42, 48)
 	ThemeContainer.BorderSizePixel = 0
-	ThemeContainer.Parent = Content
+	ThemeContainer.Parent = ConfigScroll
 
 	local ThemeContainerCorner = Instance.new("UICorner")
 	ThemeContainerCorner.CornerRadius = UDim.new(0, 8)
@@ -1883,10 +2084,10 @@ function ShowConfigMenu()
 
 	local ToggleCard = Instance.new("Frame")
 	ToggleCard.Size = UDim2.new(1, -32, 0, 66)
-	ToggleCard.Position = UDim2.new(0, 16, 0, 192)
+	ToggleCard.Position = UDim2.new(0, 16, 0, 157)
 	ToggleCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	ToggleCard.BorderSizePixel = 0
-	ToggleCard.Parent = Content
+	ToggleCard.Parent = ConfigScroll
 
 	local ToggleCorner = Instance.new("UICorner")
 	ToggleCorner.CornerRadius = UDim.new(0, 8)
@@ -1953,6 +2154,22 @@ function ShowConfigMenu()
 			end
 		end)
 	end)
+	local NotificationButton = Instance.new("TextButton")
+	NotificationButton.Size = UDim2.new(1, -32, 0, 36)
+	NotificationButton.Position = UDim2.new(0, 16, 0, 231)
+	NotificationButton.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	NotificationButton.BorderSizePixel = 0
+	NotificationButton.Text = "Notificações   ›"
+	NotificationButton.TextColor3 = Color3.fromRGB(225, 225, 230)
+	NotificationButton.TextSize = 14
+	NotificationButton.Font = Enum.Font.Gotham
+	NotificationButton.Parent = ConfigScroll
+	Instance.new("UICorner", NotificationButton).CornerRadius = UDim.new(0, 8)
+
+	NotificationButton.Activated:Connect(function()
+		ShowNotificationSettings()
+	end)
+
 
 end
 
@@ -2350,7 +2567,11 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then return end
 
 	if input.KeyCode == Settings.ToggleKey then
-		Main.Visible = not Main.Visible
+		if Main.Visible then
+			ClosePanelAnimated()
+		else
+			OpenPanelAnimated()
+		end
 
 		if Main.Visible then
 			ShowMainMenu()
