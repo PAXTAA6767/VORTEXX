@@ -1313,7 +1313,7 @@ function ShowPlayerMenu()
 		FlyKeyButton.Text = "..."
 	end)
 
-	-- Barra de velocidade do voo: 0 a 200
+	-- Barra de velocidade do voo: 0 a 100
 	local FlySpeedCard = Instance.new("Frame")
 	FlySpeedCard.Size = UDim2.new(1, -32, 0, 76)
 	FlySpeedCard.Position = UDim2.new(0, 16, 0, 274)
@@ -1348,7 +1348,7 @@ function ShowPlayerMenu()
 	FlyBarCorner.Parent = FlyBar
 
 	local FlyFill = Instance.new("Frame")
-	FlyFill.Size = UDim2.new(Settings.FlySpeed / 200, 0, 1, 0)
+	FlyFill.Size = UDim2.new(Settings.FlySpeed / 100, 0, 1, 0)
 	FlyFill.BackgroundColor3 = GetTheme().Accent
 	FlyFill.BorderSizePixel = 0
 	FlyFill.Parent = FlyBar
@@ -1360,7 +1360,7 @@ function ShowPlayerMenu()
 	local FlyKnob = Instance.new("TextButton")
 	FlyKnob.Size = UDim2.new(0, 22, 0, 22)
 	FlyKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-	FlyKnob.Position = UDim2.new(Settings.FlySpeed / 200, 0, 0.5, 0)
+	FlyKnob.Position = UDim2.new(Settings.FlySpeed / 100, 0, 0.5, 0)
 	FlyKnob.BackgroundColor3 = GetTheme().Accent
 	FlyKnob.BorderSizePixel = 0
 	FlyKnob.Text = ""
@@ -1378,7 +1378,7 @@ function ShowPlayerMenu()
 		if width <= 0 then return end
 
 		local alpha = math.clamp((inputX - FlyBar.AbsolutePosition.X) / width, 0, 1)
-		local value = math.clamp(math.floor(alpha * 200 + 0.5), 0, 200)
+		local value = math.clamp(math.floor(alpha * 100 + 0.5), 0, 100)
 		Settings.FlySpeed = value
 		FlyFill.Size = UDim2.new(alpha, 0, 1, 0)
 		FlyKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
