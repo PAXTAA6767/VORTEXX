@@ -3056,7 +3056,7 @@ local function updateESP(plr)
 		data.Label = nil
 	end
 
-	-- Tracer 3D: cor fixa da equipe, sem emissão própria e afetado pela iluminação ambiente.
+	-- Tracer: cor fixa da equipe, sem brilho/emissão.
 	local tracerColor = darkTeamColor(teamColor)
 
 	if Settings.EnableTracers then
@@ -3098,7 +3098,7 @@ local function updateESP(plr)
 				beam.Color = ColorSequence.new(tracerColor)
 				beam.Transparency = NumberSequence.new(0)
 				beam.LightEmission = 0
-				beam.LightInfluence = 1
+				beam.LightInfluence = 0
 				beam.Parent = localRoot
 
 				data.Tracer = beam
@@ -3107,7 +3107,7 @@ local function updateESP(plr)
 				data.Tracer.Color = ColorSequence.new(tracerColor)
 				data.Tracer.Transparency = NumberSequence.new(0)
 				data.Tracer.LightEmission = 0
-				data.Tracer.LightInfluence = 1
+				data.Tracer.LightInfluence = 0
 			end
 		else
 			destroyTracer(data)
