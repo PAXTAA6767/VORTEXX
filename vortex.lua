@@ -17,6 +17,7 @@ end
 local Settings = {
 	-- Jogador
 	WalkSpeedBoost = 0,
+	Fly = false,
 	FollowPlayer = false,
 	NoWait = false,
 	GodMode = false,
@@ -131,6 +132,53 @@ Players.PlayerRemoving:Connect(function(leavingPlayer)
 	if FollowTarget == leavingPlayer then
 		stopFollowing()
 	end
+end)
+
+--------------------------------------------------
+-- VOAR - JOGADOR
+--------------------------------------------------
+
+local FLY_SPEED = 70
+
+local function setFly(value)
+	Settings.Fly = value
+	if not value then
+		local character = Player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if humanoid then humanoid.AutoRotate = true end
+		if root then root.AssemblyLinearVelocity = Vector3.zero end
+	end
+end
+
+RunService.Heartbeat:Connect(function()
+	if not Settings.Fly then return end
+
+	local character = Player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not root then return end
+
+	-- Usa o mesmo sentido do movimento normal do personagem.
+	local direction = humanoid.MoveDirection
+	local currentY = root.AssemblyLinearVelocity.Y
+
+	-- Mantém o personagem praticamente "andando no ar".
+	local vertical = 0
+	if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+		vertical = FLY_SPEED
+	elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+		vertical = -FLY_SPEED
+	end
+
+	if direction.Magnitude > 0 then
+		local horizontal = direction.Unit * FLY_SPEED
+		root.AssemblyLinearVelocity = Vector3.new(horizontal.X, vertical, horizontal.Z)
+	else
+		root.AssemblyLinearVelocity = Vector3.new(0, vertical, 0)
+	end
+
+	humanoid.AutoRotate = true
 end)
 
 --------------------------------------------------
@@ -997,7 +1045,11 @@ function ShowPlayerMenu()
 		refreshNoWait()
 	end)
 
-	CreateOption(PlayerScroll, "God Mode", 212, Settings.GodMode, function(value)
+	CreateOption(PlayerScroll, "Voar", 212, Settings.Fly, function(value)
+		setFly(value)
+	end)
+
+	CreateOption(PlayerScroll, "God Mode", 306, Settings.GodMode, function(value)
 		Settings.GodMode = value
 		applyGodMode()
 	end)
@@ -1013,13 +1065,13 @@ function ShowPlayerMenu()
 	NoWaitHint.TextXAlignment = Enum.TextXAlignment.Left
 	NoWaitHint.Parent = PlayerScroll
 
-	CreateOption(PlayerScroll, "Aimbot", 306, Settings.Aimbot, function(value)
+	CreateOption(PlayerScroll, "Aimbot", 400, Settings.Aimbot, function(value)
 		Settings.Aimbot = value
 	end)
 
 	local AimbotHint = Instance.new("TextLabel")
 	AimbotHint.Size = UDim2.new(1, -32, 0, 22)
-	AimbotHint.Position = UDim2.new(0, 16, 0, 364)
+	AimbotHint.Position = UDim2.new(0, 16, 0, 458)
 	AimbotHint.BackgroundTransparency = 1
 	AimbotHint.Text = "Mira na cabeça do inimigo mais próximo."
 	AimbotHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -1030,7 +1082,7 @@ function ShowPlayerMenu()
 
 	local DistanceCard = Instance.new("Frame")
 	DistanceCard.Size = UDim2.new(1, -32, 0, 58)
-	DistanceCard.Position = UDim2.new(0, 16, 0, 400)
+	DistanceCard.Position = UDim2.new(0, 16, 0, 494)
 	DistanceCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	DistanceCard.BorderSizePixel = 0
 	DistanceCard.Parent = PlayerScroll
@@ -1075,7 +1127,7 @@ function ShowPlayerMenu()
 
 	local DistanceHint = Instance.new("TextLabel")
 	DistanceHint.Size = UDim2.new(1, -32, 0, 22)
-	DistanceHint.Position = UDim2.new(0, 16, 0, 463)
+	DistanceHint.Position = UDim2.new(0, 16, 0, 557)
 	DistanceHint.BackgroundTransparency = 1
 	DistanceHint.Text = "Escolha de 1 a 200 metros."
 	DistanceHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -1086,13 +1138,13 @@ function ShowPlayerMenu()
 
 
 	-- MIRA TELEGUIDADA - opção separada do Aimbot
-	CreateOption(PlayerScroll, "Mira Teleguiada", 500, Settings.GuidedAim, function(value)
+	CreateOption(PlayerScroll, "Mira Teleguiada", 594, Settings.GuidedAim, function(value)
 		Settings.GuidedAim = value
 	end)
 
 	local GuidedHint = Instance.new("TextLabel")
 	GuidedHint.Size = UDim2.new(1, -32, 0, 22)
-	GuidedHint.Position = UDim2.new(0, 16, 0, 558)
+	GuidedHint.Position = UDim2.new(0, 16, 0, 652)
 	GuidedHint.BackgroundTransparency = 1
 	GuidedHint.Text = "Trava a mira em um inimigo e acompanha seus movimentos."
 	GuidedHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -1103,7 +1155,7 @@ function ShowPlayerMenu()
 
 	local GuidedDistanceCard = Instance.new("Frame")
 	GuidedDistanceCard.Size = UDim2.new(1, -32, 0, 58)
-	GuidedDistanceCard.Position = UDim2.new(0, 16, 0, 594)
+	GuidedDistanceCard.Position = UDim2.new(0, 16, 0, 688)
 	GuidedDistanceCard.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
 	GuidedDistanceCard.BorderSizePixel = 0
 	GuidedDistanceCard.Parent = PlayerScroll
@@ -1148,7 +1200,7 @@ function ShowPlayerMenu()
 
 	local GuidedDistanceHint = Instance.new("TextLabel")
 	GuidedDistanceHint.Size = UDim2.new(1, -32, 0, 22)
-	GuidedDistanceHint.Position = UDim2.new(0, 16, 0, 657)
+	GuidedDistanceHint.Position = UDim2.new(0, 16, 0, 751)
 	GuidedDistanceHint.BackgroundTransparency = 1
 	GuidedDistanceHint.Text = "Alcance independente: escolha de 1 a 500 metros."
 	GuidedDistanceHint.TextColor3 = Color3.fromRGB(125, 125, 132)
@@ -1184,7 +1236,7 @@ function ShowPlayerMenu()
 
 	local BottomSpace = Instance.new("Frame")
 	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
-	BottomSpace.Position = UDim2.new(0, 0, 0, 694)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 788)
 	BottomSpace.BackgroundTransparency = 1
 	BottomSpace.Parent = PlayerScroll
 
