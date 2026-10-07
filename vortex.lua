@@ -2596,6 +2596,7 @@ local function destroyESP(plr)
 	if data.Billboard then data.Billboard:Destroy() end
 	if data.Tracer then data.Tracer:Destroy() end
 	if data.TracerAttachment then data.TracerAttachment:Destroy() end
+	if data.Tracer2D then data.Tracer2D:Destroy() end
 
 	if data.Humanoid and data.OriginalDisplayDistanceType then
 		pcall(function()
@@ -3056,64 +3057,56 @@ local function updateESP(plr)
 		data.Label = nil
 	end
 
-	-- Tracer: cor fixa da equipe, sem brilho/emissão.
-	local tracerColor = darkTeamColor(teamColor)
-
+	-- Tracer 2D: cor fixa da equipe, sem iluminação, bloom ou brilho do mundo 3D.
 	if Settings.EnableTracers then
+		local camera = workspace.CurrentCamera
 		local localRoot = getRoot(Player.Character)
 
-		-- Se o jogador local morreu/respawnou, o Beam antigo fica preso no root antigo.
-		-- Nesse caso, removemos e recriamos automaticamente.
-		if data.Tracer and (
-			not data.Tracer.Parent
-				or not data.Tracer.Attachment0
-				or data.Tracer.Attachment0.Parent ~= localRoot
-				or not data.Tracer.Attachment1
-				or data.Tracer.Attachment1.Parent ~= root
-			) then
-			destroyTracer(data)
-		end
-
-		if localRoot then
-			local fromAttachment = localRoot:FindFirstChild("VortexTracerOrigin")
-
-			if not fromAttachment then
-				fromAttachment = Instance.new("Attachment")
-				fromAttachment.Name = "VortexTracerOrigin"
-				fromAttachment.Parent = localRoot
+		if camera and localRoot then
+			if data.Tracer then
+				data.Tracer:Destroy()
+				data.Tracer = nil
+			end
+			if data.TracerAttachment then
+				data.TracerAttachment:Destroy()
+				data.TracerAttachment = nil
 			end
 
-			if not data.Tracer then
-				local attachment = Instance.new("Attachment")
-				attachment.Name = "VortexTracerAttachment"
-				attachment.Parent = root
+			if not data.Tracer2D then
+				local line = Instance.new("Frame")
+				line.Name = "VortexTracer2D"
+				line.AnchorPoint = Vector2.new(0, 0.5)
+				line.BorderSizePixel = 0
+				line.ZIndex = 50
+				line.Parent = Gui
+				data.Tracer2D = line
+			end
 
-				local beam = Instance.new("Beam")
-				beam.Name = "VortexTracer"
-				beam.Attachment0 = fromAttachment
-				beam.Attachment1 = attachment
-				beam.FaceCamera = true
-				beam.Width0 = 0.085
-				beam.Width1 = 0.085
-				beam.Color = ColorSequence.new(tracerColor)
-				beam.Transparency = NumberSequence.new(0)
-				beam.LightEmission = 0
-				beam.LightInfluence = 0
-				beam.Parent = localRoot
+			local from3D = localRoot.Position
+			local to3D = root.Position
+			local from2D, fromVisible = camera:WorldToViewportPoint(from3D)
+			local to2D, toVisible = camera:WorldToViewportPoint(to3D)
 
-				data.Tracer = beam
-				data.TracerAttachment = attachment
+			if from3D and to3D and from2D.Z > 0 and to2D.Z > 0 then
+				local p1 = Vector2.new(from2D.X, from2D.Y)
+				local p2 = Vector2.new(to2D.X, to2D.Y)
+				local delta = p2 - p1
+				local length = delta.Magnitude
+
+				data.Tracer2D.Visible = length > 0
+				data.Tracer2D.BackgroundColor3 = teamColor
+				data.Tracer2D.Position = UDim2.fromOffset(p1.X, p1.Y)
+				data.Tracer2D.Size = UDim2.fromOffset(length, 2)
+				data.Tracer2D.Rotation = math.deg(math.atan2(delta.Y, delta.X))
 			else
-				data.Tracer.Color = ColorSequence.new(tracerColor)
-				data.Tracer.Transparency = NumberSequence.new(0)
-				data.Tracer.LightEmission = 0
-				data.Tracer.LightInfluence = 0
+				data.Tracer2D.Visible = false
 			end
-		else
-			destroyTracer(data)
+		elseif data.Tracer2D then
+			data.Tracer2D.Visible = false
 		end
-	else
-		destroyTracer(data)
+	elseif data.Tracer2D then
+		data.Tracer2D:Destroy()
+		data.Tracer2D = nil
 	end
 end
 
@@ -3163,6 +3156,13 @@ end)
 -- Reaplica configurações do ESP, cores de equipe, distância e novos personagens.
 task.spawn(function()
 	while task.wait(0.25) do
+		refreshAllESP()
+	end
+end)
+
+-- Tracers 2D precisam acompanhar a câmera a cada frame.
+RunService.RenderStepped:Connect(function()
+	if Settings.EnableESP and Settings.EnableTracers then
 		refreshAllESP()
 	end
 end)
