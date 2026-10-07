@@ -146,6 +146,15 @@ local function setFly(value)
 		local character = Player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local root = character and character:FindFirstChild("HumanoidRootPart")
+
+		if character then
+			for _, part in ipairs(character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					-- No personagem padrão, o corpo volta a colidir e o HumanoidRootPart permanece sem colisão.
+					part.CanCollide = part.Name ~= "HumanoidRootPart"
+				end
+			end
+		end
 		if humanoid then humanoid.AutoRotate = true end
 		if root then
 			root.AssemblyLinearVelocity = Vector3.new(
@@ -161,6 +170,15 @@ RunService.Heartbeat:Connect(function()
 	if not Settings.Fly then return end
 
 	local character = Player.Character
+
+	-- Enquanto estiver voando, remove a colisão das partes do personagem.
+	if character then
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if not humanoid or not root then return end
@@ -172,15 +190,14 @@ RunService.Heartbeat:Connect(function()
 	-- Mantém o personagem praticamente "andando no ar".
 	local vertical = 0
 	if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-		vertical = 16 * math.max(Settings.FlySpeed, 1)
+		vertical = Settings.FlySpeed == 0 and 16 or Settings.FlySpeed
 	elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
 		vertical = -14
 	end
 
 	if direction.Magnitude > 0 then
-		local normalSpeed = humanoid.WalkSpeed > 0 and humanoid.WalkSpeed or 16
-		local multiplier = math.max(Settings.FlySpeed, 1)
-		local horizontal = direction.Unit * (normalSpeed * multiplier)
+		local flySpeed = Settings.FlySpeed == 0 and 16 or Settings.FlySpeed
+		local horizontal = direction.Unit * flySpeed
 		root.AssemblyLinearVelocity = Vector3.new(horizontal.X, vertical, horizontal.Z)
 	else
 		root.AssemblyLinearVelocity = Vector3.new(0, vertical, 0)
@@ -1073,7 +1090,7 @@ function ShowPlayerMenu()
 	FlySpeedLabel.Size = UDim2.new(1, -32, 0, 28)
 	FlySpeedLabel.Position = UDim2.new(0, 16, 0, 5)
 	FlySpeedLabel.BackgroundTransparency = 1
-	FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(Settings.FlySpeed) .. "x"
+	FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(Settings.FlySpeed)
 	FlySpeedLabel.TextColor3 = Color3.fromRGB(225, 225, 230)
 	FlySpeedLabel.TextSize = 15
 	FlySpeedLabel.Font = Enum.Font.Gotham
@@ -1092,7 +1109,7 @@ function ShowPlayerMenu()
 	FlyBarCorner.Parent = FlyBar
 
 	local FlyFill = Instance.new("Frame")
-	FlyFill.Size = UDim2.new(Settings.FlySpeed / 200, 0, 1, 0)
+	FlyFill.Size = UDim2.new(Settings.FlySpeed / 100, 0, 1, 0)
 	FlyFill.BackgroundColor3 = GetTheme().Accent
 	FlyFill.BorderSizePixel = 0
 	FlyFill.Parent = FlyBar
@@ -1104,7 +1121,7 @@ function ShowPlayerMenu()
 	local FlyKnob = Instance.new("TextButton")
 	FlyKnob.Size = UDim2.new(0, 22, 0, 22)
 	FlyKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-	FlyKnob.Position = UDim2.new(Settings.FlySpeed / 200, 0, 0.5, 0)
+	FlyKnob.Position = UDim2.new(Settings.FlySpeed / 100, 0, 0.5, 0)
 	FlyKnob.BackgroundColor3 = GetTheme().Accent
 	FlyKnob.BorderSizePixel = 0
 	FlyKnob.Text = ""
@@ -1122,11 +1139,11 @@ function ShowPlayerMenu()
 		if width <= 0 then return end
 
 		local alpha = math.clamp((inputX - FlyBar.AbsolutePosition.X) / width, 0, 1)
-		local value = math.clamp(math.floor(alpha * 200 + 0.5), 0, 200)
+		local value = math.clamp(math.floor(alpha * 100 + 0.5), 0, 100)
 		Settings.FlySpeed = value
 		FlyFill.Size = UDim2.new(alpha, 0, 1, 0)
 		FlyKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
-		FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(value) .. "x"
+		FlySpeedLabel.Text = "Velocidade do voo: " .. tostring(value)
 	end
 
 	FlyKnob.InputBegan:Connect(function(input)
