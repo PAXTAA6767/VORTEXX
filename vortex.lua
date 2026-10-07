@@ -581,15 +581,15 @@ Gui.Parent = PlayerGui
 
 local NotificationHolder = Instance.new("Frame")
 NotificationHolder.Name = "NotificationHolder"
-NotificationHolder.AnchorPoint = Vector2.new(1, 1)
-NotificationHolder.Position = UDim2.new(1, -18, 1, -18)
+NotificationHolder.AnchorPoint = Vector2.new(1, 0)
+NotificationHolder.Position = UDim2.new(1, -18, 0, 18)
 NotificationHolder.Size = UDim2.new(0, 330, 0, 250)
 NotificationHolder.BackgroundTransparency = 1
 NotificationHolder.Parent = Gui
 
 local NotificationLayout = Instance.new("UIListLayout")
 NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 NotificationLayout.Padding = UDim.new(0, 8)
 NotificationLayout.Parent = NotificationHolder
 
@@ -746,10 +746,11 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 1, 0)
 Title.Position = UDim2.new(0, 38, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "Vortex"
-Title.TextColor3 = Color3.fromRGB(220, 220, 225)
-Title.TextSize = 16
-Title.Font = Enum.Font.Gotham
+Title.Text = "VORTEX"
+Title.AutoLocalize = false
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 15
+Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Top
 
@@ -3055,7 +3056,7 @@ local function updateESP(plr)
 		data.Label = nil
 	end
 
-	-- Tracer: mesma cor da equipe, porém mais escura e sem emissão.
+	-- Tracer: cor fixa da equipe, sem brilho/emissão.
 	local tracerColor = darkTeamColor(teamColor)
 
 	if Settings.EnableTracers then
@@ -3096,7 +3097,7 @@ local function updateESP(plr)
 				beam.Width1 = 0.085
 				beam.Color = ColorSequence.new(tracerColor)
 				beam.Transparency = NumberSequence.new(0)
-				beam.LightEmission = 1
+				beam.LightEmission = 0
 				beam.LightInfluence = 0
 				beam.Parent = localRoot
 
@@ -3105,7 +3106,7 @@ local function updateESP(plr)
 			else
 				data.Tracer.Color = ColorSequence.new(tracerColor)
 				data.Tracer.Transparency = NumberSequence.new(0)
-				data.Tracer.LightEmission = 1
+				data.Tracer.LightEmission = 0
 				data.Tracer.LightInfluence = 0
 			end
 		else
