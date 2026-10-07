@@ -17,6 +17,7 @@ end
 local Settings = {
 	-- Jogador
 	WalkSpeedBoost = 0,
+	FollowPlayer = false,
 	NoWait = false,
 	GodMode = false,
 	Aimbot = false,
@@ -46,6 +47,92 @@ local getRoleAndColor
 --------------------------------------------------
 -- WALK SPEED - JOGADOR
 -- 0 = NORMAL | 1-200 = ACRÉSCIMO SOBRE A VELOCIDADE BASE
+--------------------------------------------------
+-- OLHAR PLAYER - OUTROS
+--------------------------------------------------
+
+local FollowTarget = nil
+local FollowPauseUntil = 0
+
+local function setFollowTarget(targetPlayer)
+	if targetPlayer == Player then
+		return
+	end
+	FollowTarget = targetPlayer
+	Settings.FollowPlayer = targetPlayer ~= nil
+end
+
+local function stopFollowing()
+	-- Guarda a posição atual antes de desligar o acompanhamento.
+	local character = Player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+
+	FollowTarget = nil
+	Settings.FollowPlayer = false
+	FollowPauseUntil = 0
+
+	-- Cancela qualquer MoveTo antigo que ainda possa estar ativo.
+	if humanoid and root then
+		humanoid:Move(Vector3.zero, false)
+		humanoid:MoveTo(root.Position)
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+	end
+end
+
+-- Dá uma pequena janela para interações/combate sem o TP reposicionar
+-- o personagem a cada frame.
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed or not Settings.FollowPlayer then return end
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch
+		or input.KeyCode == Enum.KeyCode.E
+		or input.KeyCode == Enum.KeyCode.F then
+		FollowPauseUntil = os.clock() + 0.45
+	end
+end)
+
+
+RunService.Heartbeat:Connect(function()
+	local target = FollowTarget
+	if not Settings.FollowPlayer or not target or target.Parent ~= Players then
+		return
+	end
+
+	local character = Player.Character
+	local targetCharacter = target.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local targetRoot = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
+	local targetHumanoid = targetCharacter and targetCharacter:FindFirstChildOfClass("Humanoid")
+
+	if not humanoid or not root or not targetRoot or not targetHumanoid or targetHumanoid.Health <= 0 then
+		return
+	end
+
+	-- Durante uma interação, deixa o personagem parado por alguns instantes.
+	if os.clock() < FollowPauseUntil then
+		return
+	end
+
+	-- Mantém você perto, mas sem ficar exatamente dentro do outro personagem.
+	-- 2.5 studs atrás costuma deixar as interações mais estáveis.
+	local followOffset = CFrame.new(0, 0, 2.5)
+	local desiredCFrame = targetRoot.CFrame * followOffset
+
+	character:PivotTo(desiredCFrame)
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
+end)
+
+Players.PlayerRemoving:Connect(function(leavingPlayer)
+	if FollowTarget == leavingPlayer then
+		stopFollowing()
+	end
+end)
+
 --------------------------------------------------
 
 local NormalWalkSpeed = 16
@@ -1215,6 +1302,157 @@ function ShowOthersMenu()
 	AddressText.Text = "Vortex / Outros"
 	CreateBackButton(ShowMainMenu)
 	CreateMenuTitle("Outros")
+
+	-- Área rolável da aba Outros.
+	local OthersScroll = Instance.new("ScrollingFrame")
+	OthersScroll.Name = "OthersScroll"
+	OthersScroll.Size = UDim2.new(1, -12, 1, -64)
+	OthersScroll.Position = UDim2.new(0, 6, 0, 64)
+	OthersScroll.BackgroundTransparency = 1
+	OthersScroll.BorderSizePixel = 0
+	OthersScroll.CanvasSize = UDim2.new(0, 0, 0, 420)
+	OthersScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	OthersScroll.ScrollBarThickness = 4
+	OthersScroll.ScrollBarImageColor3 = GetTheme().Accent
+	OthersScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+	OthersScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+	OthersScroll.Parent = Content
+
+	local Card = Instance.new("Frame")
+	Card.Name = "LookPlayerCard"
+	Card.Size = UDim2.new(1, -32, 0, 48)
+	Card.Position = UDim2.new(0, 16, 0, 8)
+	Card.BackgroundColor3 = Color3.fromRGB(47, 47, 53)
+	Card.BorderSizePixel = 0
+	Card.Parent = OthersScroll
+
+	local CardCorner = Instance.new("UICorner")
+	CardCorner.CornerRadius = UDim.new(0, 7)
+	CardCorner.Parent = Card
+
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(0, 210, 1, 0)
+	Label.Position = UDim2.new(0, 16, 0, 0)
+	Label.BackgroundTransparency = 1
+	Label.Text = "Olhar Jogador"
+	Label.TextColor3 = Color3.fromRGB(220, 220, 225)
+	Label.TextSize = 17
+	Label.Font = Enum.Font.Gotham
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = Card
+
+	local Description = Instance.new("TextLabel")
+	Description.Size = UDim2.new(1, -32, 0, 24)
+	Description.Position = UDim2.new(0, 16, 0, 58)
+	Description.BackgroundTransparency = 1
+	Description.Text = "Selecione um jogador do servidor para acompanhar de perto."
+	Description.TextColor3 = Color3.fromRGB(130, 130, 140)
+	Description.TextSize = 10
+	Description.Font = Enum.Font.Gotham
+	Description.TextWrapped = false
+	Description.TextXAlignment = Enum.TextXAlignment.Left
+	Description.TextYAlignment = Enum.TextYAlignment.Center
+	Description.Parent = OthersScroll
+
+	local PlayerSelect = Instance.new("TextButton")
+	PlayerSelect.Size = UDim2.new(0, 260, 0, 36)
+	PlayerSelect.Position = UDim2.new(1, -276, 0.5, -18)
+	PlayerSelect.BackgroundColor3 = Color3.fromRGB(39, 39, 44)
+	PlayerSelect.BorderSizePixel = 0
+	PlayerSelect.Text = FollowTarget and ("Olhando: " .. FollowTarget.DisplayName) or "Selecionar jogador"
+	PlayerSelect.TextColor3 = Color3.fromRGB(220, 220, 225)
+	PlayerSelect.TextSize = 13
+	PlayerSelect.Font = Enum.Font.Gotham
+	PlayerSelect.AutoButtonColor = false
+	PlayerSelect.Parent = Card
+
+	local SelectCorner = Instance.new("UICorner")
+	SelectCorner.CornerRadius = UDim.new(0, 7)
+	SelectCorner.Parent = PlayerSelect
+
+	local PlayerList = Instance.new("ScrollingFrame")
+	PlayerList.Size = UDim2.new(0, 260, 0, 145)
+	PlayerList.Position = UDim2.new(1, -276, 1, 4)
+	PlayerList.BackgroundColor3 = Color3.fromRGB(31, 31, 36)
+	PlayerList.BorderSizePixel = 0
+	PlayerList.ScrollBarThickness = 3
+	PlayerList.ScrollBarImageColor3 = GetTheme().Accent
+	PlayerList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	PlayerList.CanvasSize = UDim2.new()
+	PlayerList.Visible = false
+	PlayerList.ZIndex = 20
+	PlayerList.Parent = Card
+
+	local ListCorner = Instance.new("UICorner")
+	ListCorner.CornerRadius = UDim.new(0, 7)
+	ListCorner.Parent = PlayerList
+
+	local Layout = Instance.new("UIListLayout")
+	Layout.Padding = UDim.new(0, 3)
+	Layout.Parent = PlayerList
+
+	local function refreshPlayers()
+		for _, child in ipairs(PlayerList:GetChildren()) do
+			if child:IsA("TextButton") then child:Destroy() end
+		end
+
+		for _, targetPlayer in ipairs(Players:GetPlayers()) do
+			if targetPlayer ~= Player then
+				local Entry = Instance.new("TextButton")
+				Entry.Size = UDim2.new(1, -6, 0, 34)
+				Entry.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+				Entry.BorderSizePixel = 0
+				Entry.Text = targetPlayer.DisplayName .. "  (@" .. targetPlayer.Name .. ")"
+				Entry.TextColor3 = Color3.fromRGB(220, 220, 225)
+				Entry.TextSize = 12
+				Entry.Font = Enum.Font.Gotham
+				Entry.ZIndex = 21
+				Entry.Parent = PlayerList
+
+				local Corner = Instance.new("UICorner")
+				Corner.CornerRadius = UDim.new(0, 5)
+				Corner.Parent = Entry
+
+				Entry.Activated:Connect(function()
+					setFollowTarget(targetPlayer)
+					PlayerSelect.Text = "Olhando: " .. targetPlayer.DisplayName
+					PlayerList.Visible = false
+				end)
+			end
+		end
+
+		local Stop = Instance.new("TextButton")
+		Stop.Size = UDim2.new(1, -6, 0, 34)
+		Stop.BackgroundColor3 = Color3.fromRGB(43, 43, 49)
+		Stop.BorderSizePixel = 0
+		Stop.Text = "Parar de olhar"
+		Stop.TextColor3 = Color3.fromRGB(220, 220, 225)
+		Stop.TextSize = 12
+		Stop.Font = Enum.Font.Gotham
+		Stop.ZIndex = 21
+		Stop.Parent = PlayerList
+
+		local Corner = Instance.new("UICorner")
+		Corner.CornerRadius = UDim.new(0, 5)
+		Corner.Parent = Stop
+
+		Stop.Activated:Connect(function()
+			stopFollowing()
+			PlayerSelect.Text = "Selecionar jogador"
+			PlayerList.Visible = false
+		end)
+	end
+
+	PlayerSelect.Activated:Connect(function()
+		refreshPlayers()
+		PlayerList.Visible = not PlayerList.Visible
+	end)
+	local BottomSpace = Instance.new("Frame")
+	BottomSpace.Size = UDim2.new(1, 0, 0, 28)
+	BottomSpace.Position = UDim2.new(0, 0, 0, 250)
+	BottomSpace.BackgroundTransparency = 1
+	BottomSpace.Parent = OthersScroll
+
 end
 
 function ShowConfigMenu()
