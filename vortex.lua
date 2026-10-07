@@ -581,15 +581,15 @@ Gui.Parent = PlayerGui
 
 local NotificationHolder = Instance.new("Frame")
 NotificationHolder.Name = "NotificationHolder"
-NotificationHolder.AnchorPoint = Vector2.new(1, 0)
-NotificationHolder.Position = UDim2.new(1, -18, 0, 18)
+NotificationHolder.AnchorPoint = Vector2.new(1, 1)
+NotificationHolder.Position = UDim2.new(1, -18, 1, -18)
 NotificationHolder.Size = UDim2.new(0, 330, 0, 250)
 NotificationHolder.BackgroundTransparency = 1
 NotificationHolder.Parent = Gui
 
 local NotificationLayout = Instance.new("UIListLayout")
 NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 NotificationLayout.Padding = UDim.new(0, 8)
 NotificationLayout.Parent = NotificationHolder
 
@@ -746,11 +746,10 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 1, 0)
 Title.Position = UDim2.new(0, 38, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "VORTEX"
-Title.AutoLocalize = false
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 15
-Title.Font = Enum.Font.GothamBold
+Title.Text = "Vortex"
+Title.TextColor3 = Color3.fromRGB(220, 220, 225)
+Title.TextSize = 16
+Title.Font = Enum.Font.Gotham
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Top
 
