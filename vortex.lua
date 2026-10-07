@@ -326,7 +326,8 @@ end)
 -- Reaplica a velocidade e, se necessário, reforça o movimento horizontal.
 -- Isso ajuda em jogos que possuem outro controlador alterando o WalkSpeed.
 RunService.Heartbeat:Connect(function()
-	if Settings.WalkSpeedBoost <= 0 then
+	-- Não sobrescreve a velocidade horizontal enquanto o voo estiver ativo.
+	if Settings.Fly or Settings.WalkSpeedBoost <= 0 then
 		return
 	end
 
@@ -1347,7 +1348,7 @@ function ShowPlayerMenu()
 	FlyBarCorner.Parent = FlyBar
 
 	local FlyFill = Instance.new("Frame")
-	FlyFill.Size = UDim2.new(Settings.FlySpeed / 100, 0, 1, 0)
+	FlyFill.Size = UDim2.new(Settings.FlySpeed / 200, 0, 1, 0)
 	FlyFill.BackgroundColor3 = GetTheme().Accent
 	FlyFill.BorderSizePixel = 0
 	FlyFill.Parent = FlyBar
@@ -1359,7 +1360,7 @@ function ShowPlayerMenu()
 	local FlyKnob = Instance.new("TextButton")
 	FlyKnob.Size = UDim2.new(0, 22, 0, 22)
 	FlyKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-	FlyKnob.Position = UDim2.new(Settings.FlySpeed / 100, 0, 0.5, 0)
+	FlyKnob.Position = UDim2.new(Settings.FlySpeed / 200, 0, 0.5, 0)
 	FlyKnob.BackgroundColor3 = GetTheme().Accent
 	FlyKnob.BorderSizePixel = 0
 	FlyKnob.Text = ""
@@ -1377,7 +1378,7 @@ function ShowPlayerMenu()
 		if width <= 0 then return end
 
 		local alpha = math.clamp((inputX - FlyBar.AbsolutePosition.X) / width, 0, 1)
-		local value = math.clamp(math.floor(alpha * 100 + 0.5), 0, 100)
+		local value = math.clamp(math.floor(alpha * 200 + 0.5), 0, 200)
 		Settings.FlySpeed = value
 		FlyFill.Size = UDim2.new(alpha, 0, 1, 0)
 		FlyKnob.Position = UDim2.new(alpha, 0, 0.5, 0)
