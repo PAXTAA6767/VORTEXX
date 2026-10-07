@@ -2610,12 +2610,8 @@ local function getRoot(character)
 end
 
 local function darkTeamColor(color)
-	-- Mantém a mesma tonalidade da equipe, mas sem aparência luminosa.
-	return Color3.new(
-		math.clamp(color.R * 0.58, 0, 1),
-		math.clamp(color.G * 0.58, 0, 1),
-		math.clamp(color.B * 0.58, 0, 1)
-	)
+	-- Mantém exatamente a cor definida para a equipe.
+	return color
 end
 
 local function destroyTracer(data)
@@ -3100,8 +3096,8 @@ local function updateESP(plr)
 				beam.Width1 = 0.085
 				beam.Color = ColorSequence.new(tracerColor)
 				beam.Transparency = NumberSequence.new(0)
-				beam.LightEmission = 0
-				beam.LightInfluence = 1
+				beam.LightEmission = 1
+				beam.LightInfluence = 0
 				beam.Parent = localRoot
 
 				data.Tracer = beam
@@ -3109,8 +3105,8 @@ local function updateESP(plr)
 			else
 				data.Tracer.Color = ColorSequence.new(tracerColor)
 				data.Tracer.Transparency = NumberSequence.new(0)
-				data.Tracer.LightEmission = 0
-				data.Tracer.LightInfluence = 1
+				data.Tracer.LightEmission = 1
+				data.Tracer.LightInfluence = 0
 			end
 		else
 			destroyTracer(data)
